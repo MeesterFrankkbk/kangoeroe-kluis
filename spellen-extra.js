@@ -208,113 +208,155 @@ SPELLEN.push({
 
 /* ---------------- Robotlogica ---------------- */
 const RICHT = [[-1, 0], [0, 1], [1, 0], [0, -1]], PIJL = ['▲', '▶', '▼', '◀'];
-function robotUitvoeren(tokens, max = 400) {
-  const uit = [], stapel = []; let fout = null;
-  const parse = (i) => { const blok = []; while (i < tokens.length) { const t = tokens[i]; if (t.t === 'E') return [blok, i + 1]; if (t.t === 'H') { const [b, j] = parse(i + 1); blok.push({ t: 'H', n: t.n, b }); i = j; } else { blok.push(t); i++; } } return [blok, i]; };
-  let diepte = 0; for (const t of tokens) { if (t.t === 'H') diepte++; if (t.t === 'E') diepte--; if (diepte < 0) fout = 'Er staat een "einde herhaal" te veel.'; }
-  if (diepte > 0) fout = 'Een "herhaal" is nog niet afgesloten met "einde herhaal".';
-  if (fout) return { fout };
-  const [prog] = parse(0);
-  const plat = b => { for (const t of b) { if (uit.length > max) return; if (t.t === 'H') for (let k = 0; k < t.n; k++) plat(t.b); else uit.push(t.t); } };
-  plat(prog); void stapel;
-  return { stappen: uit.slice(0, max) };
+function robotParse(tokens) {
+  let diepte = 0;
+  for (const t of tokens) { if (t.t === 'H') diepte++; if (t.t === 'E') diepte--; if (diepte < 0) return { fout: 'Er staat een "einde herhaal" te veel.' }; }
+  if (diepte > 0) return { fout: 'Een "herhaal" is nog niet afgesloten met "einde herhaal".' };
+  const parse = i => { const blok = []; while (i < tokens.length) { const t = tokens[i]; if (t.t === 'E') return [blok, i + 1]; if (t.t === 'H') { const [b, j] = parse(i + 1); blok.push({ t: 'H', n: t.n, b }); i = j; } else { blok.push(t); i++; } } return [blok, i]; };
+  return { prog: parse(0)[0] };
 }
+function robotUitvoeren(main, fA = [], max = 600) {
+  const m = robotParse(main); if (m.fout) return { fout: m.fout };
+  const a = robotParse(fA); if (a.fout) return { fout: 'Functie A: ' + a.fout };
+  const uit = [];
+  const plat = (b, d) => { for (const t of b) { if (uit.length > max || d > 12) return; if (t.t === 'H') for (let k = 0; k < t.n; k++) plat(t.b, d + 1); else if (t.t === 'A') plat(a.prog, d + 1); else uit.push(t.t); } };
+  plat(m.prog, 0);
+  if (uit.length > max) return { fout: 'Je programma is veel te lang (of roept zichzelf eindeloos op).' };
+  return { stappen: uit };
+}
+const telRobot = tokens => tokens.filter(t => t.t !== 'E').length;
 function maakRobotPuzzel(n) {
-  const N = [0, 5, 6, 7, 8, 8][n];
-  const T = t => ({ t }), H = k => ({ t: 'H', n: k }), E = () => ({ t: 'E' });
+  const N = [0, 5, 6, 7, 8, 9][n];
+  const T = t => ({ t }), H = k => ({ t: 'H', n: k }), E = () => ({ t: 'E' }), A = () => ({ t: 'A' });
   const fs = k => Array.from({ length: k }, () => T('F'));
-  const draai = () => T(U.pick(['L', 'R']));
-  for (let poging = 0; poging < 3000; poging++) {
-    let prog = [];
-    if (n === 1) { prog = [...fs(U.r(1, 3)), draai(), ...fs(U.r(1, 3))]; if (Math.random() < 0.5) prog.push(draai(), ...fs(U.r(1, 2))); }
-    else if (n === 2) { for (let s = 0; s < U.r(3, 4); s++) { if (s) prog.push(draai()); prog.push(...fs(U.r(1, 3))); } }
-    else if (n === 3) { const body = [...fs(U.r(1, 2)), draai()]; if (Math.random() < 0.5) body.push(...fs(1), T(body[body.length - 1].t === 'L' ? 'R' : 'L')); prog = [...fs(U.r(0, 2)), H(U.r(2, 4)), ...body, E()]; }
-    else if (n === 4) { prog = [H(U.r(2, 3)), ...fs(U.r(1, 2)), draai(), E(), ...fs(U.r(0, 1)), draai(), H(U.r(2, 3)), ...fs(U.r(1, 2)), draai(), E()]; }
-    else { const t = draai(); prog = [H(U.r(2, 3)), H(U.r(2, 3)), T('F'), E(), t, ...(Math.random() < 0.5 ? [T('F')] : []), E(), ...fs(U.r(0, 2))]; }
-    const { stappen } = robotUitvoeren(prog);
+  const dr = () => T(U.pick(['L', 'R'])), tegen = t => T(t.t === 'L' ? 'R' : 'L');
+  const lus = (k, body) => [H(k), ...body, E()];
+  const sjablonen = {
+    1: [() => [...fs(U.r(1, 3)), dr(), ...fs(U.r(1, 3))], () => [...fs(U.r(1, 2)), dr(), ...fs(U.r(1, 2)), dr(), ...fs(U.r(1, 2))]],
+    2: [() => { const p = []; for (let s = 0; s < U.r(4, 6); s++) { if (s) p.push(dr()); p.push(...fs(U.r(1, 3))); } return p; }],
+    3: [
+      () => [...fs(U.r(0, 2)), ...lus(U.r(3, 5), [...fs(U.r(1, 2)), dr()])],
+      () => { const t = dr(); return [...fs(U.r(0, 1)), ...lus(U.r(3, 4), [T('F'), t, T('F'), tegen(t)]), ...fs(U.r(0, 2))]; },
+      () => { const t = dr(); return [...lus(U.r(2, 3), [...fs(U.r(2, 3)), t, T('F'), t, ...fs(U.r(2, 3)), tegen(t), T('F'), tegen(t)])]; },
+      () => [...lus(U.r(3, 6), fs(1)), dr(), ...lus(U.r(3, 6), fs(1)), dr(), ...fs(U.r(1, 2))],
+    ],
+    4: [
+      () => { const t = dr(); return [...lus(3, [...lus(U.r(3, 5), fs(1)), t]), ...fs(U.r(1, 2))]; },
+      () => { const t = dr(); return [...lus(U.r(2, 3), [...lus(U.r(2, 3), [T('F'), t, T('F'), tegen(t)]), t])]; },
+      () => { const t = dr(); return [...lus(U.r(3, 4), [T('F'), t, T('F'), tegen(t)]), ...fs(U.r(1, 2)), tegen(t), ...lus(U.r(2, 4), [T('F'), tegen(t), T('F'), t])]; },
+      () => { const t = dr(); return [...lus(2, [...lus(U.r(3, 5), fs(1)), t, T('F'), t, ...lus(U.r(3, 5), fs(1)), tegen(t), T('F'), tegen(t)])]; },
+    ],
+    5: [
+      () => { const t = dr(); return { main: lus(3, [A(), t]), A: [...lus(U.r(3, 4), fs(1)), t, T('F'), tegen(t)] }; },
+      () => { const t = dr(), k = U.r(3, 5); return { main: lus(U.r(2, 3), [A()]), A: [...lus(k, fs(1)), t, T('F'), t, ...lus(k, fs(1)), tegen(t), T('F'), tegen(t)] }; },
+      () => { const t = dr(); return { main: [A(), A(), A()], A: [...lus(U.r(2, 3), [T('F'), t, T('F'), tegen(t)]), t] }; },
+      () => { const t = dr(); return { main: [A(), T('F'), t, A(), T('F'), tegen(t), A()], A: lus(U.r(2, 3), [T('F'), t, T('F'), tegen(t)]) }; },
+      () => { const t = dr(); return { main: lus(2, [A(), t, T('F'), t, A(), tegen(t), T('F'), tegen(t)]), A: lus(U.r(3, 5), fs(1)) }; },
+      () => { const t = dr(); return { main: lus(U.r(2, 3), [A(), A(), t]), A: [...fs(U.r(1, 2)), t, T('F'), tegen(t)] }; },
+      () => { const t = dr(); return { main: [...lus(U.r(2, 3), [A(), t]), T('F'), ...lus(2, [A(), tegen(t)])], A: [...fs(U.r(2, 3)), t, T('F'), tegen(t)] }; },
+    ],
+  };
+  for (let poging = 0; poging < 6000; poging++) {
+    let g = U.pick(sjablonen[n])(); if (Array.isArray(g)) g = { main: g, A: [] };
+    const { stappen, fout } = robotUitvoeren(g.main, g.A); if (fout) continue;
     let r = U.r(0, N - 1), c = U.r(0, N - 1), d = U.r(0, 3), ok = true;
     const start = { r, c, d }, pad = [[r, c]], bezocht = new Set([r * N + c]);
-    for (const s of stappen) {
-      if (s === 'L') d = (d + 3) % 4; else if (s === 'R') d = (d + 1) % 4;
+    for (const st of stappen) {
+      if (st === 'L') d = (d + 3) % 4; else if (st === 'R') d = (d + 1) % 4;
       else { r += RICHT[d][0]; c += RICHT[d][1]; if (r < 0 || c < 0 || r >= N || c >= N || bezocht.has(r * N + c)) { ok = false; break; } bezocht.add(r * N + c); pad.push([r, c]); }
     }
-    if (!ok || pad.length < [0, 3, 5, 6, 8, 8][n]) continue;
+    if (!ok || pad.length < [0, 3, 7, 8, 10, 12][n]) continue;
     const doel = pad[pad.length - 1];
-    const sterren = n >= 4 ? U.shuffle(pad.slice(1, -1)).slice(0, n === 4 ? 2 : 3) : [];
+    const sterren = n >= 3 ? U.shuffle(pad.slice(2, -1)).slice(0, [0, 0, 0, 1, 3, 4][n]) : [];
     const muren = new Set(); const vrij = [...Array(N * N).keys()].filter(i => !bezocht.has(i));
-    U.shuffle(vrij).slice(0, Math.round(vrij.length * [0, 0.2, 0.25, 0.3, 0.3, 0.3][n])).forEach(i => muren.add(i));
-    const limiet = n === 1 ? 99 : n === 2 ? stappen.length : prog.filter(t => t.t !== 'E').length;
-    return { N, prog, start, doel, sterren, muren, limiet };
+    U.shuffle(vrij).slice(0, Math.round(vrij.length * [0, 0.2, 0.25, 0.3, 0.38, 0.42][n])).forEach(i => muren.add(i));
+    const limiet = n === 1 ? 99 : n === 2 ? stappen.length : telRobot(g.main) + telRobot(g.A);
+    return { N, prog: g.main, fA: g.A, start, doel, sterren, muren, limiet, functies: n === 5 };
   }
 }
 SPELLEN.push({
   id: 'robot', naam: 'Robotlogica', vak: 'logica', icoon: '🤖', kort: 'Programmeer de robot naar de vlag.',
-  uitleg: 'Bouw een programma met blokjes: ▲ één vakje vooruit, ⟲ draai links, ⟳ draai rechts. Met 🔁 herhaal laat je blokjes een aantal keer herhalen (klik op ×2 om het aantal te veranderen), sluit af met "einde herhaal". Klik op een blokje in je programma om het weg te halen. Op hogere niveaus moet je ook alle sterren pakken en mag je maar een beperkt aantal blokjes gebruiken.',
+  uitleg: 'Bouw een programma met blokjes: ▲ één vakje vooruit, ⟲ draai links, ⟳ draai rechts (de robot draait ter plaatse). Met 🔁 herhaal laat je blokjes een aantal keer herhalen (klik op ×2 om het aantal te veranderen) en je sluit af met "einde herhaal". Herhalingen mogen ook in elkaar. Op diamant schrijf je bovendien een functie A: een eigen blokje dat je in je hoofdprogramma zo vaak kunt gebruiken als je wil. Pak alle sterren en blijf binnen het maximum aantal blokjes. Elke "Nieuwe opgave" is een nieuw parcours.',
   maak(n, doos, ctx) {
     const P = maakRobotPuzzel(n), N = P.N;
-    let prog = [], bezig = false;
+    const progs = { main: [], A: [] };
+    let actief = 'main', bezig = false;
     const rooster = U.el('div', { class: 'robot-rooster', style: `grid-template-columns: repeat(${N}, var(--rob))` });
     const cellen = [...Array(N * N)].map(() => { const c = U.el('div', { class: 'rob-cel' }); rooster.append(c); return c; });
-    const status = U.el('div', { class: 'route-info' });
+    const status = U.el('div', { class: 'route-info' }), melding = U.el('div', { class: 'rob-melding' });
     const tekenVeld = (r = P.start.r, c = P.start.c, d = P.start.d, gepakt = new Set(), spoor = []) => {
       cellen.forEach((el, i) => {
         const rr = Math.floor(i / N), cc = i % N;
         el.className = 'rob-cel' + (P.muren.has(i) ? ' muur' : '') + (spoor.includes(i) ? ' spoor' : '');
-        el.textContent = rr === r && cc === c ? '' : P.muren.has(i) ? '' : (rr === P.doel[0] && cc === P.doel[1]) ? '🏁' : P.sterren.some(s => s[0] === rr && s[1] === cc && !gepakt.has(rr * N + cc)) ? '⭐' : '';
-        if (rr === r && cc === c) el.append(U.el('span', { class: 'robot' }, '🤖', U.el('small', {}, PIJL[d])));
+        el.textContent = (rr === r && cc === c) || P.muren.has(i) ? '' : (rr === P.doel[0] && cc === P.doel[1]) ? '🏁' : P.sterren.some(s => s[0] === rr && s[1] === cc && !gepakt.has(rr * N + cc)) ? '⭐' : '';
+        if (rr === r && cc === c) el.append(U.el('span', { class: 'robot', style: `--hoek:${d * 90}deg` }, U.el('span', { class: 'robot-pijl' }, '▲'), '🤖'));
       });
     };
-    const progBox = U.el('div', { class: 'programma' });
-    const telBlokjes = () => prog.filter(t => t.t !== 'E').length;
-    const tekenProg = () => {
+    const kader = naam => U.el('div', { class: 'programma' + (actief === naam ? ' actief' : ''), onclick: () => { if (P.functies && actief !== naam) { actief = naam; tekenProg(); } } });
+    const progBox = U.el('div');
+    const telAlles = () => telRobot(progs.main) + telRobot(progs.A);
+    const chips = naam => {
       let diepte = 0;
-      progBox.replaceChildren(...(prog.length ? prog.map((t, k) => {
+      const lijst = progs[naam];
+      return lijst.length ? lijst.map((t, k) => {
         if (t.t === 'E') diepte--;
-        const el = U.el('span', { class: 'blok b' + t.t, style: `margin-left:${diepte * 1.2}rem`, title: 'Klik om weg te halen', onclick: () => { if (bezig) return; prog.splice(k, 1); tekenProg(); } },
-          { F: '▲ vooruit', L: '⟲ links', R: '⟳ rechts', H: '🔁 herhaal', E: '⏹ einde herhaal' }[t.t],
+        const el = U.el('span', { class: 'blok b' + t.t, style: `margin-left:${Math.max(0, diepte) * 1.2}rem`, title: 'Klik om weg te halen', onclick: e => { e.stopPropagation(); if (bezig) return; lijst.splice(k, 1); tekenProg(); } },
+          { F: '▲ vooruit', L: '⟲ links', R: '⟳ rechts', H: '🔁 herhaal', E: '⏹ einde herhaal', A: '🅰 functie A' }[t.t],
           t.t === 'H' ? U.el('button', { class: 'aantal', onclick: e => { e.stopPropagation(); t.n = t.n >= 9 ? 2 : t.n + 1; tekenProg(); } }, `×${t.n}`) : null);
         if (t.t === 'H') diepte++;
         return el;
-      }) : [U.el('span', { class: 'stil' }, 'Klik hieronder op blokjes om je programma te bouwen.')]));
-      status.replaceChildren(U.el('span', {}, `Blokjes: ${telBlokjes()}${P.limiet < 99 ? ' / max ' + P.limiet : ''}`), P.sterren.length ? U.el('span', {}, `⭐ pak alle ${P.sterren.length} sterren`) : null);
+      }) : [U.el('span', { class: 'stil' }, naam === 'main' ? 'Klik hieronder op blokjes om je programma te bouwen.' : 'Klik hier en voeg blokjes toe aan functie A.')];
     };
-    const voeg = t => { if (bezig) return; prog.push(t); tekenProg(); };
+    const tekenProg = () => {
+      const m = kader('main'); m.append(...chips('main'));
+      if (P.functies) { const a = kader('A'); a.append(...chips('A')); progBox.replaceChildren(U.el('div', { class: 'label' }, 'Hoofdprogramma' + (actief === 'main' ? ' (actief)' : ' — klik om te bewerken')), m, U.el('div', { class: 'label' }, '🅰 Functie A' + (actief === 'A' ? ' (actief)' : ' — klik om te bewerken')), a); }
+      else progBox.replaceChildren(U.el('div', { class: 'label' }, 'Jouw programma'), m);
+      status.replaceChildren(U.el('span', {}, `Blokjes: ${telAlles()}${P.limiet < 99 ? ' / max ' + P.limiet : ''}`), P.sterren.length ? U.el('span', {}, `⭐ pak alle ${P.sterren.length} sterren`) : null);
+      knopA && (knopA.disabled = actief === 'A');
+    };
+    const voeg = t => { if (bezig) return; progs[actief].push(t); melding.textContent = ''; tekenProg(); };
     const simuleer = () => {
-      const res = robotUitvoeren(prog); if (res.fout) return { fout: res.fout };
-      let { r, c, d } = P.start; const gepakt = new Set(), spoor = [r * N + c], frames = [[r, c, d]];
-      for (const s of res.stappen) {
-        if (s === 'L') d = (d + 3) % 4; else if (s === 'R') d = (d + 1) % 4;
-        else { const nr = r + RICHT[d][0], nc = c + RICHT[d][1]; if (nr < 0 || nc < 0 || nr >= N || nc >= N || P.muren.has(nr * N + nc)) return { frames, fout: 'Botsing! De robot kan daar niet heen.', gepakt, spoor }; r = nr; c = nc; spoor.push(r * N + c); if (P.sterren.some(s2 => s2[0] === r && s2[1] === c)) gepakt.add(r * N + c); }
+      const res = robotUitvoeren(progs.main, progs.A); if (res.fout) return { fout: res.fout };
+      let { r, c, d } = P.start; const gepakt = new Set(), spoor = [r * N + c], frames = [[r, c, d, new Set(), []]];
+      for (const st of res.stappen) {
+        if (st === 'L') d = (d + 3) % 4; else if (st === 'R') d = (d + 1) % 4;
+        else { const nr = r + RICHT[d][0], nc = c + RICHT[d][1]; if (nr < 0 || nc < 0 || nr >= N || nc >= N || P.muren.has(nr * N + nc)) return { frames, fout: 'Botsing! De robot kan daar niet heen.' }; r = nr; c = nc; spoor.push(r * N + c); if (P.sterren.some(s2 => s2[0] === r && s2[1] === c)) gepakt.add(r * N + c); }
         frames.push([r, c, d, new Set(gepakt), [...spoor]]);
       }
-      const opDoel = r === P.doel[0] && c === P.doel[1];
-      if (!opDoel) return { frames, fout: 'De robot staat niet op de vlag.' };
+      if (!(r === P.doel[0] && c === P.doel[1])) return { frames, fout: 'De robot staat niet op de vlag.' };
       if (gepakt.size < P.sterren.length) return { frames, fout: `Nog niet alle sterren gepakt (${gepakt.size}/${P.sterren.length}).` };
-      if (telBlokjes() > P.limiet) return { frames, fout: `Het lukt, maar je gebruikt ${telBlokjes()} blokjes. Het moet met maximaal ${P.limiet}. Gebruik een herhaling!` };
+      if (telAlles() > P.limiet) return { frames, fout: `Het lukt, maar je gebruikt ${telAlles()} blokjes. Het moet met maximaal ${P.limiet}. ${P.functies ? 'Gebruik functie A slimmer!' : 'Gebruik (geneste) herhalingen!'}` };
       return { frames, ok: true };
     };
     const speel = () => {
-      if (bezig) return; const s = simuleer();
-      if (!s.frames) { status.prepend(U.el('span', { class: 'nok' }, s.fout + ' ')); return; }
+      if (bezig) return; const s = simuleer(); melding.textContent = '';
+      if (!s.frames) { melding.textContent = s.fout; return; }
       bezig = true; let k = 0;
       const t = setInterval(() => {
         if (!rooster.isConnected) { clearInterval(t); return; }
-        const f = s.frames[k]; tekenVeld(f[0], f[1], f[2], f[3] || new Set(), f[4] || []); k++;
-        if (k >= s.frames.length) { clearInterval(t); bezig = false; tekenProg(); if (s.ok) ctx.klaar?.(); else status.prepend(U.el('span', { class: 'nok' }, s.fout + ' ')); }
-      }, 280);
+        const f = s.frames[k]; tekenVeld(...f); k++;
+        if (k >= s.frames.length) { clearInterval(t); bezig = false; if (s.ok) ctx.klaar?.(); else melding.textContent = s.fout; }
+      }, Math.max(90, 280 - s.frames.length * 3));
     };
-    tekenVeld(); tekenProg();
-    doos.append(U.el('div', { class: 'robot-wrap' }, rooster, U.el('div', {},
-      U.el('div', { class: 'label' }, 'Jouw programma'), progBox, status,
+    let knopA = null;
+    tekenVeld();
+    const palet = U.el('div', {},
       U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'blok bF', onclick: () => voeg({ t: 'F' }) }, '▲ vooruit'), U.el('button', { class: 'blok bL', onclick: () => voeg({ t: 'L' }) }, '⟲ links'), U.el('button', { class: 'blok bR', onclick: () => voeg({ t: 'R' }) }, '⟳ rechts')),
-      n >= 2 ? U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'blok bH', onclick: () => voeg({ t: 'H', n: 2 }) }, '🔁 herhaal'), U.el('button', { class: 'blok bE', onclick: () => voeg({ t: 'E' }) }, '⏹ einde herhaal')) : null,
-      U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop', onclick: speel }, '▶ Start de robot'), U.el('button', { class: 'knop tweede klein', onclick: () => { if (!bezig) { prog = []; tekenProg(); tekenVeld(); } } }, '🗑 Wis')))));
+      n >= 2 ? U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'blok bH', onclick: () => voeg({ t: 'H', n: 2 }) }, '🔁 herhaal'), U.el('button', { class: 'blok bE', onclick: () => voeg({ t: 'E' }) }, '⏹ einde herhaal'),
+        P.functies ? (knopA = U.el('button', { class: 'blok bA', onclick: () => voeg({ t: 'A' }) }, '🅰 functie A')) : null) : null,
+      U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop', onclick: speel }, '▶ Start de robot'), U.el('button', { class: 'knop tweede klein', onclick: () => { if (!bezig) { tekenVeld(); melding.textContent = ''; } } }, '↺ Robot terug'), U.el('button', { class: 'knop tweede klein', onclick: () => { if (!bezig) { progs[actief] = []; tekenProg(); tekenVeld(); } } }, '🗑 Wis')));
+    tekenProg();
+    doos.append(U.el('div', { class: 'robot-wrap' }, rooster, U.el('div', {}, progBox, status, melding, palet)));
     return {
       controleer() { const s = simuleer(); return s.ok ? { ok: true } : { ok: false, msg: s.fout }; },
       hint() {
-        let k = 0; while (k < prog.length && k < P.prog.length && prog[k].t === P.prog[k].t && (prog[k].t !== 'H' || prog[k].n === P.prog[k].n)) k++;
-        prog = P.prog.slice(0, Math.min(P.prog.length, k + 1)).map(t => ({ ...t })); tekenProg(); tekenVeld();
-        return 'Het begin van een goed programma staat er nu.';
+        const gelijk = (x, y) => x.t === y.t && (x.t !== 'H' || x.n === y.n);
+        const prefix = (a, b) => { let k = 0; while (k < a.length && k < b.length && gelijk(a[k], b[k])) k++; return k; };
+        const vul = (naam, juist) => { const k = prefix(progs[naam], juist); progs[naam] = juist.slice(0, Math.min(juist.length, k + 1)).map(t => ({ ...t })); };
+        if (P.functies && (prefix(progs.A, P.fA) < P.fA.length || progs.A.length > P.fA.length)) { vul('A', P.fA); actief = 'A'; }
+        else { vul('main', P.prog); actief = 'main'; }
+        tekenProg(); tekenVeld();
+        return P.functies ? 'Er staat een stukje van een goede oplossing klaar (kijk ook naar functie A).' : 'Het begin van een goed programma staat er nu.';
       }
     };
   }

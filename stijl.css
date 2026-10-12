@@ -473,3 +473,10 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .code-tekst.morse { font: 700 1.5rem 'Courier New', monospace; gap: .6rem 2.4rem; letter-spacing: 2px; }
 .code-tekst.morse .m-letter { margin-right: .9rem; background: var(--papier); border-radius: 6px; padding: 0 .3rem; }
 .code-tekst.morse .code-woord { display: inline-flex; flex-wrap: wrap; row-gap: .3rem; }
+
+.programma.actief { outline: 3px solid var(--oranje); background: #FFF6EC; }
+.programma { cursor: pointer; margin-bottom: .4rem; }
+.bA { background: #7C4DCC; }
+.robot { display: inline-grid; place-items: center; position: relative; }
+.robot-pijl { position: absolute; inset: -.55rem; display: grid; place-items: start center; transform: rotate(var(--hoek)); color: var(--oranje); font-size: .85rem; font-weight: 900; }
+.rob-melding { color: var(--fout); font-weight: 800; min-height: 1.4em; margin: .2rem 0; }
