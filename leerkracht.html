@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kangoeroe-Kluis · Leerkracht</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦘</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="stijl.css">
+<style>
+  main { max-width: 1400px; }
+  .tabs { display: flex; gap: .4rem; margin: 0 0 1rem; flex-wrap: wrap; align-items: center; }
+  .tabs button { border: 1.5px solid var(--lijn); background: #fff; border-radius: 99px; padding: .35rem 1rem; font-weight: 800; color: var(--zacht); }
+  .tabs button.aan { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .tabs .rechts { margin-left: auto; display: flex; gap: .5rem; align-items: center; font-weight: 700; }
+  select, .veld { font: 700 .95rem 'Nunito', sans-serif; border: 2px solid var(--lijn); border-radius: 8px; padding: .35rem .5rem; background: #fff; color: var(--inkt); }
+  table.lijst td, table.lijst th { white-space: nowrap; font-size: .93rem; }
+  td.m { text-align: center; } td.m small { display: block; color: var(--zacht); font-size: .72rem; }
+  .rij-acties { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; align-items: center; }
+  .ll-tabel td { padding: .25rem .4rem; } .ll-tabel input { width: 100%; min-width: 5rem; }
+  .x { border: none; background: var(--fout-l); color: var(--fout); border-radius: 8px; height: 2.1rem; width: 2.2rem; font-weight: 800; }
+  .blok { background: #fff; border: 1.5px solid var(--lijn); border-radius: var(--rond); padding: 1rem; margin-bottom: 1rem; }
+  .blok h3 { margin-bottom: .5rem; }
+  .sets { display: grid; gap: .4rem; }
+  .set { display: flex; align-items: center; gap: .6rem; padding: .4rem .6rem; border-radius: 10px; background: var(--papier); flex-wrap: wrap; }
+  .set b { flex: 1; } .set .stil { font-size: .85rem; }
+  .form { display: grid; gap: .6rem; } .form > label, .form .rij2 > label { display: grid; gap: .2rem; font-weight: 800; font-size: .9rem; }
+  .form textarea { font: 600 .95rem/1.45 ui-monospace, 'Cascadia Mono', Consolas, monospace; min-height: 12rem; }
+  .rij2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .6rem; }
+  .vraagkaart { border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem .8rem; background: #fff; display: grid; gap: .4rem; }
+  .vraagkaart .kopje { display: flex; gap: .5rem; align-items: center; }
+  .vraagkaart .kopje b { flex: 1; }
+  .soort { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; background: var(--teal-l); color: var(--teal); border-radius: 99px; padding: .1rem .5rem; }
+  .klein-knop { border: 1.5px solid var(--lijn); background: #fff; border-radius: 8px; padding: .15rem .5rem; font-weight: 800; }
+  .vinkjes { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-weight: 700; }
+  .status { border-radius: 99px; padding: .1rem .6rem; font-weight: 800; font-size: .8rem; }
+  .status.open { background: var(--goed-l); color: var(--goed); } .status.gepland { background: var(--teal-l); color: var(--teal); } .status.dicht { background: #eee; color: var(--zacht); }
+  .ok { color: var(--goed); font-weight: 800; } .nok { color: var(--fout); font-weight: 800; }
+  .generator { background: var(--papier); border-radius: 12px; padding: .8rem; display: grid; gap: .5rem; }
+  @media print { .kop, .voet, .tabs, .rij-acties, .geen-print { display: none !important; } }
+</style>
+</head>
+<body>
+<header class="kop"><div class="logo">🦘 <span>Kangoeroe-Kluis · Leerkracht</span></div><div id="kop-rechts"></div></header>
+<main id="app"></main>
+<footer class="voet"><a href="index.html">Naar de leerlingenapp</a></footer>
+<script src="kern.js"></script>
+<script src="data-nl.js"></script>
+<script src="talen-data.js"></script>
+<script src="spellen-taal.js"></script>
+<script src="spellen-reken.js"></script>
+<script src="spellen-logica.js"></script>
+<script src="talen.js"></script>
+<script src="leerkracht.js"></script>
+</body>
+</html>
