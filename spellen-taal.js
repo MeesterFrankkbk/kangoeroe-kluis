@@ -12,14 +12,46 @@ function woordLijst(ctx, min = 3, max = 15) {
 }
 const alleWoorden = (min, max) => woordLijst({ bron: INGEBOUWD.woorden[0] }, min, max);
 const schoonZin = z => U.zonderAccent(z).toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+/* Zinnen mogen een betekenis hebben: "zin ; betekenis" */
+const splitsZin = r => { const [z, ...b] = String(r).split(/\s*;\s*/); return { z: schoonZin(z), b: b.join('; ').trim() }; };
 function zinLijst(ctx) {
-  const z = (ctx?.bron?.zinnen || []).map(schoonZin).filter(z => z.length >= 6);
-  return z.length ? z : INGEBOUWD.zinnen[0].zinnen.map(schoonZin);
+  const z = (ctx?.bron?.zinnen || []).map(r => splitsZin(r).z).filter(z => z.length >= 6);
+  return z.length ? z : INGEBOUWD.zinnen[0].zinnen.map(r => splitsZin(r).z);
+}
+const alleZinItems = ctx => [...(ctx?.bron?.zinnen || []), ...Object.values(INGEBOUWD.zinnen).flatMap(b => b.zinnen), ...((typeof EIGEN !== 'undefined' && EIGEN.zinnen) || []).flatMap(b => b.zinnen || [])].map(splitsZin);
+const betekenisVan = (ctx, zin) => alleZinItems(ctx).find(x => x.z === zin && x.b)?.b || '';
+const leesbaar = z => z.charAt(0) + z.slice(1).toLowerCase();
+/* Na het oplossen: kies de juiste betekenis van het spreekwoord of de uitdrukking */
+function metBetekenis(inst, doos, zin, ctx) {
+  const b = betekenisVan(ctx, zin);
+  if (!b || !inst) return inst;
+  let fase = 1, mc = null;
+  const blok = U.el('div', { class: 'betekenis' });
+  return {
+    ...inst,
+    controleer() {
+      if (fase === 1) {
+        const r = inst.controleer(); if (!r.ok) return r;
+        fase = 2;
+        const pool = [...new Set(alleZinItems(ctx).filter(x => x.b && x.b !== b).map(x => x.b))];
+        const opties = U.shuffle([b, ...U.shuffle(pool).slice(0, 3)]);
+        mc = rijMC(['Wat betekent ', U.el('b', {}, `"${leesbaar(zin)}"`), '?'], opties, opties.indexOf(b));
+        blok.append(U.el('div', { class: 'label' }, '✅ Gevonden! Nog één vraag:'), mc.el);
+        doos.append(blok); blok.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+        return { ok: false, info: true, msg: 'Goed zo! Klik nu de juiste betekenis aan en controleer opnieuw.' };
+      }
+      const st = mc.status();
+      if (st === null) return { ok: false, info: true, msg: 'Klik eerst de betekenis aan die volgens jou juist is.' };
+      mc.el.classList.toggle('fout', !st); mc.el.classList.toggle('goed', st);
+      return st ? { ok: true } : { ok: false, msg: 'Dat is niet de juiste betekenis. Probeer opnieuw. Tip: zoek het spreekwoord op in een woordenboek.' };
+    },
+    hint() { if (fase === 1) return inst.hint(); mc.hint(); return 'De juiste betekenis is aangeduid.'; }
+  };
 }
 /* Kies een zin tussen min en max tekens, met woorden van hoogstens maxWoord letters */
 function kiesZin(lijst, min, max, maxWoord = 99) {
   const passend = lijst.filter(z => z.split(' ').every(w => w.length <= maxWoord));
-  const bron = passend.length ? passend : INGEBOUWD.zinnen.flatMap(b => b.zinnen).map(schoonZin).filter(z => z.split(' ').every(w => w.length <= maxWoord));
+  const bron = passend.length ? passend : INGEBOUWD.zinnen.flatMap(b => b.zinnen).map(r => splitsZin(r).z).filter(z => z.split(' ').every(w => w.length <= maxWoord));
   const binnen = bron.filter(z => z.length >= min && z.length <= max);
   if (binnen.length) return U.pick(binnen);
   const afstand = z => z.length < min ? min - z.length : z.length - max;
@@ -160,6 +192,7 @@ SPELLEN.push({
     const zinnen = zinLijst(ctx);
     let tekst = n <= 3 ? kiesZin(zinnen, [0, 10, 16, 20][n], [0, 26, 34, 42][n]) : kiesZin(zinnen, n === 4 ? 26 : 34, n === 4 ? 50 : 80);
     if (n === 5 && tekst.length < 40) { let t2; do { t2 = kiesZin(zinnen, 20, 45); } while (t2 === tekst && zinnen.length > 1); tekst += ' ' + t2; }
+    doos.dataset.zin = tekst;
     const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const code = {};
     let verschuiving = 0;
@@ -227,6 +260,7 @@ SPELLEN.push({
     const zinnen = zinLijst(ctx);
     let zin = kiesZin(zinnen, [0, 10, 18, 24, 28, 36][n], [0, 24, 32, 42, 55, 80][n]);
     if (n === 5 && zin.length < 36) zin += ' ' + kiesZin(zinnen.filter(z => z !== zin), 10, 40);
+    doos.dataset.zin = zin;
     const grootte = [0, 4, 3, 3, 2, 2][n];
     const stenen = [];
     for (let k = 0; k < zin.length; k += grootte) stenen.push(zin.slice(k, k + grootte));
@@ -268,6 +302,7 @@ SPELLEN.push({
     const zinnen = zinLijst(ctx);
     let zin = kiesZin(zinnen, [0, 10, 18, 26, 32, 40][n], [0, 22, 30, 40, 55, 80][n], W);
     if (n === 5 && zin.length < 40) zin += ' ' + kiesZin(zinnen.filter(z => z !== zin), 10, 40, W);
+    doos.dataset.zin = zin;
     const lijnen = []; let huidig = '';
     for (const w of zin.split(' ')) {
       if (!huidig) huidig = w; else if ((huidig + ' ' + w).length <= W) huidig += ' ' + w; else { lijnen.push(huidig); huidig = w; }
@@ -466,3 +501,10 @@ SPELLEN.push({
     return U.invul(cellen);
   }
 });
+
+/* Spreekwoordspellen krijgen een betekenisvraag */
+for (const id of ['geheimschrift', 'zinsstenen', 'gevallen']) {
+  const sp = SPELLEN.find(x => x.id === id), orig = sp.maak;
+  sp.maak = function (n, doos, ctx) { const inst = orig.call(this, n, doos, ctx); return metBetekenis(inst, doos, doos.dataset.zin, ctx); };
+  sp.uitleg += ' Is de oplossing een spreekwoord of uitdrukking, dan kies je daarna ook de juiste betekenis.';
+}

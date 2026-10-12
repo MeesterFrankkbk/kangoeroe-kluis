@@ -393,3 +393,83 @@ tr.klik { cursor: pointer; } tr.klik:hover td { background: #FFF6EC; }
   .speelveld { padding: .8rem; }
   h1 { font-size: 1.5rem; }
 }
+
+/* ---- Betekenisvraag ---- */
+.betekenis { margin-top: 1rem; border-top: 2px dashed var(--lijn); padding-top: .6rem; }
+
+/* ---- Rebus ---- */
+.rebus { gap: .6rem; }
+.rb-zin { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .8rem; }
+.rb-pic { display: inline-flex; flex-direction: column; align-items: center; gap: .1rem; }
+.rb-emoji { font-size: 2.6rem; line-height: 1.1; }
+.rb-naam { color: var(--hint); font-weight: 800; min-height: 1.1em; }
+.rb-op { font: 700 1.3rem 'Fredoka', sans-serif; color: var(--oranje); background: #FFF1E3; border-radius: 8px; padding: .1rem .5rem; }
+.rb-woord { font-size: 1.2rem; font-weight: 700; }
+.rb-in { padding: .2rem .4rem; text-align: center; }
+
+/* ---- Droedels ---- */
+.droedel-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .8rem; }
+.droedel-rij { align-content: start; }
+.droedel { width: 100%; max-width: 220px; aspect-ratio: 1; border: 2px solid var(--inkt); border-radius: 6px; overflow: hidden; margin: 0 auto; background: #fff; }
+.droedel svg { width: 100%; height: 100%; display: block; }
+.droedel-rij .opties { flex-direction: column; } .droedel-rij .optie { text-align: left; }
+.droedel-sel { font: 700 .95rem 'Nunito', sans-serif; border: 2px solid var(--lijn); border-radius: 8px; padding: .35rem; width: 100%; }
+.droedel-doek { width: 100%; max-width: 400px; aspect-ratio: 1; border: 2px solid var(--inkt); border-radius: 8px; touch-action: none; background: #fff; display: block; margin: .5rem 0; }
+.kleurknop { width: 2rem; height: 2rem; border-radius: 50%; border: 2px solid var(--lijn); }
+
+/* ---- Codekraker ---- */
+.code-tekst.klein { font-size: 1.1rem; letter-spacing: 1px; gap: .5rem 1.6rem; }
+.sleutel-tabel.morse b { font-size: .95rem; letter-spacing: 1px; }
+.vh { width: 1.9rem; height: 1.9rem; display: inline-block; vertical-align: middle; }
+.code-woord .vh { margin-right: 2px; }
+table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, table.poly td { border: 1px solid var(--lijn); width: 2.4rem; height: 2rem; text-align: center; font-weight: 800; } table.poly th { background: var(--teal-l); color: var(--teal); }
+
+/* ---- Robotlogica ---- */
+:root { --rob: 3rem; --kk: 3rem; }
+.robot-wrap { display: grid; grid-template-columns: auto 1fr; gap: 1.2rem; align-items: start; }
+@media (max-width: 760px) { .robot-wrap { grid-template-columns: 1fr; } }
+.robot-rooster { display: grid; gap: 3px; width: max-content; }
+.rob-cel { width: var(--rob); height: var(--rob); border-radius: 6px; background: #EEF5F4; display: grid; place-items: center; font-size: 1.5rem; }
+.rob-cel.muur { background: #6D4C41; }
+.rob-cel.spoor { background: #FFE0B8; }
+.robot { position: relative; font-size: 1.6rem; } .robot small { position: absolute; right: -.6rem; top: -.5rem; font-size: .8rem; color: var(--oranje); }
+.programma { min-height: 3rem; background: var(--papier); border-radius: 10px; padding: .5rem; display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
+.blok { border: none; border-radius: 8px; padding: .3rem .7rem; font-weight: 800; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; }
+.bF { background: #2E8B57; } .bL, .bR { background: #3B6FB6; } .bH { background: var(--oranje); } .bE { background: #B4612A; }
+.blok .aantal { border: none; background: rgba(255,255,255,.3); color: #fff; border-radius: 6px; font-weight: 800; padding: 0 .4rem; }
+.nok { color: var(--fout); font-weight: 800; }
+
+/* ---- Doolhof ---- */
+.doolhof-wrap { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
+.doolhof { flex: 1; min-width: 260px; cursor: pointer; }
+.pijlen { display: grid; grid-template-columns: repeat(3, 3.2rem); gap: .3rem; }
+.pijlen button { height: 3.2rem; border-radius: 10px; border: 2px solid var(--lijn); background: #fff; font-size: 1.3rem; }
+
+/* ---- Kakuro ---- */
+.kakuro { display: grid; gap: 2px; width: max-content; margin: 0 auto; background: var(--inkt); padding: 2px; border-radius: 6px; }
+.kk-wit { width: var(--kk); height: var(--kk); background: #fff; }
+.kk-in { width: 100%; height: 100%; border: none; text-align: center; font: 800 1.3rem 'Nunito', sans-serif; background: transparent; }
+.kk-zwart { width: var(--kk); height: var(--kk); background: #3d4a4f; position: relative; }
+.kk-zwart.som { background: linear-gradient(to top right, #3d4a4f calc(50% - 1px), #9aa7ab, #3d4a4f calc(50% + 1px)); }
+.kk-h { position: absolute; top: 2px; right: 4px; color: #fff; font-weight: 800; font-size: .8rem; }
+.kk-v { position: absolute; bottom: 2px; left: 4px; color: #fff; font-weight: 800; font-size: .8rem; }
+
+/* ---- Bruggen ---- */
+.bruggen { background: #E3F2FD; border-radius: 12px; padding: .5rem; width: max-content; max-width: 100%; margin: 0 auto; }
+
+/* ---- Toneel ---- */
+.script { display: grid; gap: .35rem; font-size: 1.08rem; }
+.script p { margin: 0; padding: .4rem .6rem; border-radius: 8px; }
+.script .regie { font-style: italic; color: var(--zacht); }
+.script .ander { background: var(--papier); }
+.script .mijn { background: #FFF1E3; border-left: 4px solid var(--oranje); }
+.script .mijn.gedaan { background: var(--goed-l); border-left-color: var(--goed); }
+.script .nu { outline: 2px solid var(--oranje); }
+.script textarea { margin: .3rem 0; }
+.eersteletters { font-family: 'Courier New', monospace; color: var(--teal); margin: .3rem 0; font-weight: 700; }
+@media print { .kop, .voet, .knoppenrij, .spelkop { display: none !important; } }
+@media (max-width: 600px) { :root { --rob: 2.4rem; --kk: 2.5rem; } }
+
+.code-tekst.morse { font: 700 1.5rem 'Courier New', monospace; gap: .6rem 2.4rem; letter-spacing: 2px; }
+.code-tekst.morse .m-letter { margin-right: .9rem; background: var(--papier); border-radius: 6px; padding: 0 .3rem; }
+.code-tekst.morse .code-woord { display: inline-flex; flex-wrap: wrap; row-gap: .3rem; }

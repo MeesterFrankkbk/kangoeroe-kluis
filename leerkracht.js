@@ -220,10 +220,11 @@ const INHOUD_SOORTEN = [
   ['en-woorden', 'Engels: woordenschat', 'Voor de oefening Woordenschat (Engels) en voor toetsen.'],
   ['en-ww', 'Engels: werkwoorden', 'Voor Irregular verbs en voor toetsen.'],
   ['en-teksten', 'Engels: teksten', 'Voor Lezen en luisteren (Engels) en voor toetsen.'],
+  ['toneel', 'Toneelteksten', 'Voor de Toneelrepetitor. Eén regel per beurt: Naam: tekst. Regieaanwijzingen tussen haakjes.'],
 ];
 const FORMAAT = {
   woorden: ['Eén woord per regel: WOORD ; omschrijving', 'KASTEEL ; Groot stenen gebouw met torens\nRIDDER ; Hij draagt een harnas'],
-  zinnen: ['Eén zin per regel (spreekwoord, weetje, zin uit de les …)', 'Wie het eerst komt, het eerst maalt\nEen octopus heeft drie harten'],
+  zinnen: ['Eén zin per regel. Bij een spreekwoord of uitdrukking mag je de betekenis erachter zetten: zin ; betekenis (de leerlingen kiezen die betekenis dan na het oplossen). Betekenissen opzoeken kan bv. op woorden.org.', 'Al doende leert men ; Je leert iets door het te doen.\nEen octopus heeft drie harten'],
   'fr-woorden': ['Eén woord per regel: Nederlands ; Frans  (meerdere goede antwoorden met /)', 'de hond ; le chien\nhet ijsje ; la glace'],
   'en-woorden': ['Eén woord per regel: Nederlands ; Engels  (meerdere goede antwoorden met /)', 'de hond ; dog\nde gom ; rubber/eraser'],
   'fr-ww': ['Eén werkwoord per regel: infinitief ; betekenis ; je ; tu ; il ; nous ; vous ; ils ; aanvulling voor een zin (mag leeg)', 'aller ; gaan ; vais ; vas ; va ; allons ; allez ; vont ; à l\'école'],
@@ -246,7 +247,7 @@ function vanTekst(soort, tekst) {
 }
 const vragenNaarTekst = vr => (vr || []).map(v => [v.v, ...v.opties.map((o, k) => (k === v.juist ? '*' : '') + o)].join(' | ')).join('\n');
 const vragenVanTekst = t => t.split(/\r?\n/).map(r => r.trim()).filter(Boolean).map(r => { const d = r.split('|').map(s => s.trim()); const opties = d.slice(1).map(o => o.replace(/^\*/, '').trim()); return { v: d[0], opties, juist: d.slice(1).findIndex(o => o.startsWith('*')) }; }).filter(v => v.opties.length >= 2 && v.juist >= 0);
-const aantalVan = (soort, b) => soort.endsWith('teksten') ? `${b.vragen?.length || 0} vragen` : soort === 'zinnen' ? `${b.zinnen?.length || 0} zinnen` : soort.endsWith('-ww') ? `${b.ww?.length || 0} werkwoorden` : `${b.woorden?.length || 0} woorden`;
+const aantalVan = (soort, b) => soort === 'toneel' ? `${new Set(leesToneel(b.tekst).flatMap(r => r.rollen || [])).size} rollen` : soort.endsWith('teksten') ? `${b.vragen?.length || 0} vragen` : soort === 'zinnen' ? `${b.zinnen?.length || 0} zinnen` : soort.endsWith('-ww') ? `${b.ww?.length || 0} werkwoorden` : `${b.woorden?.length || 0} woorden`;
 
 async function bewaarInhoud(msgEl) {
   try { await api('bewaar-inhoud', { inhoud: EIGEN }); S.data.inhoud = EIGEN; msgEl?.replaceChildren(melding('goed', 'Bewaard. De leerlingen zien dit vanaf hun volgende aanmelding.')); return true; }
@@ -256,7 +257,12 @@ async function bewaarInhoud(msgEl) {
 function inhoudTab() {
   if (S.inhoudBewerk) return inhoudEditor(S.inhoudBewerk);
   const msg = el('div');
-  const wrap = el('div', {}, el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
+  const inst = EIGEN.instellingen || {};
+  const wrap = el('div', {},
+    el('div', { class: 'blok' }, el('h3', {}, '⚙️ Instellingen voor de leerlingen'),
+      el('label', {}, el('input', { type: 'checkbox', checked: !!inst.niveausInVolgorde, onchange: async e => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), niveausInVolgorde: e.target.checked }; await bewaarInhoud(msg); } }),
+        ' Niveaus in volgorde vrijspelen (eerst brons, dan zilver …). Uit = leerlingen kiezen zelf op welk niveau ze beginnen.')),
+    el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
   for (const [soort, titel, uitleg] of INHOUD_SOORTEN) {
     const eigen = EIGEN[soort] || [];
     wrap.append(el('div', { class: 'blok' }, el('h3', {}, titel), el('p', { class: 'stil' }, uitleg),
@@ -267,7 +273,7 @@ function inhoudTab() {
         el('details', {}, el('summary', { class: 'stil' }, `Ingebouwd (${INGEBOUWD[soort].length})`),
           el('div', { class: 'sets' }, INGEBOUWD[soort].filter(b => b.id !== 'alles').map(b => el('div', { class: 'set' }, el('span', { style: 'flex:1' }, b.naam || b.titel), el('span', { class: 'stil' }, aantalVan(soort, b)),
             el('button', { class: 'klein-knop', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren')))))),
-      el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
+      el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : soort === 'toneel' ? { titel: '', tekst: '' } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
   }
   wrap.append(el('div', { class: 'blok' }, el('h3', {}, 'Reservekopie'), el('p', { class: 'stil' }, 'Bewaar al je eigen inhoud in één bestand, of zet een reservekopie terug.'),
     el('div', { class: 'rij-acties' },
@@ -280,11 +286,15 @@ function inhoudTab() {
 
 function inhoudEditor({ soort, b, index }) {
   const msg = el('div');
-  const isTekst = soort.endsWith('teksten');
-  const naam = el('input', { class: 'veld', value: (isTekst ? b.titel : b.naam) || '', placeholder: isTekst ? 'Titel van de tekst' : 'Naam van de lijst (bv. Ridders – les 3)' });
-  const form = el('div', { class: 'form' }, el('label', {}, isTekst ? 'Titel' : 'Naam', naam));
+  const isTekst = soort.endsWith('teksten'), isToneel = soort === 'toneel';
+  const naam = el('input', { class: 'veld', value: (isTekst || isToneel ? b.titel : b.naam) || '', placeholder: isTekst || isToneel ? 'Titel' : 'Naam van de lijst (bv. Ridders – les 3)' });
+  const form = el('div', { class: 'form' }, el('label', {}, isTekst || isToneel ? 'Titel' : 'Naam', naam));
   let lees;
-  if (isTekst) {
+  if (isToneel) {
+    const tekst = el('textarea', { class: 'tekst', placeholder: '(De meester zit aan zijn tafel.)\nMeester: Goedemorgen!\nSam: Goedemorgen, meester.' }, b.tekst || '');
+    form.append(el('label', {}, 'Tekst: één beurt per regel, zo → Naam: tekst. Regie tussen haakjes. Twee spelers samen: Lotte & Daan: …', tekst));
+    lees = () => ({ ...b, titel: naam.value.trim(), tekst: tekst.value.trim() });
+  } else if (isTekst) {
     const niv = el('select', {}, [1, 2, 3, 4, 5].map(n => el('option', { value: n, selected: Number(b.niveau) === n }, `${NIVEAUS[n]} (moeilijkheid ${n})`)));
     const tekst = el('textarea', { class: 'tekst', placeholder: 'Plak hier de tekst. Een nieuwe regel = een nieuwe alinea.' }, b.tekst || '');
     const vragen = el('textarea', { class: 'tekst', placeholder: 'Wie is Léa? | *Een meisje | Een hond | Een juf' }, vragenNaarTekst(b.vragen));
@@ -301,7 +311,7 @@ function inhoudEditor({ soort, b, index }) {
   const bewaar = async () => {
     const nieuw = lees();
     if (!(nieuw.naam || nieuw.titel)) { msg.replaceChildren(melding('fout', 'Geef een naam of titel.')); return; }
-    const n = soort.endsWith('teksten') ? nieuw.tekst.length : (nieuw.woorden || nieuw.zinnen || nieuw.ww || []).length;
+    const n = soort.endsWith('teksten') || soort === 'toneel' ? (soort === 'toneel' ? leesToneel(nieuw.tekst).filter(r => r.rol).length : nieuw.tekst.length) : (nieuw.woorden || nieuw.zinnen || nieuw.ww || []).length;
     if (!n) { msg.replaceChildren(melding('fout', 'Er staat nog niets (bruikbaars) in. Kijk het formaat na.')); return; }
     if (soort.endsWith('-woorden') && nieuw.woorden.length < 4) { msg.replaceChildren(melding('fout', 'Zet minstens 4 woorden in de lijst.')); return; }
     EIGEN[soort] = EIGEN[soort] || [];

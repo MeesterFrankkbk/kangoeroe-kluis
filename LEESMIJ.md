@@ -1,6 +1,8 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 35 spellen in 5 vakken, elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 43 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+
+Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 
 - `index.html`: de leerlingenapp (aanmelden met klas → naam → persoonlijke code)
 - `leerkracht.html`: de leerkrachtomgeving (overzicht, toetsen, eigen inhoud, leerlingen en codes)
@@ -33,8 +35,8 @@ Belangrijk: **upload het zip-bestand niet zelf** naar GitHub en gebruik **geen N
 13. Ga naar **Leerlingen & codes** en plak je leerlingen uit Excel: kolommen *klas, naam, voornaam* en eventueel *code*. Zonder code maakt de app er een. Klik **Bewaar** en druk de aanmeldkaartjes af.
 14. Leerlingen surfen naar `https://<jouw-site>.netlify.app`.
 
-### Later iets aanpassen
-Open je repository op GitHub → **Add file → Upload files** → sleep de gewijzigde bestanden erin → **Commit changes**. Netlify zet de nieuwe versie zelf online. Leerlingen, resultaten, eigen inhoud en toetsen blijven bewaard.
+### Later iets aanpassen (bv. een nieuwe versie)
+Pak de nieuwe zip uit. Open je repository op GitHub → **Add file → Upload files** → sleep opnieuw de volledige inhoud van de map erin (bestaande bestanden worden overschreven, nieuwe toegevoegd) → **Commit changes**. Netlify zet de nieuwe versie zelf online. Leerlingen, resultaten, eigen inhoud en toetsen blijven bewaard.
 
 ## Goed om te weten
 - Een leerling die van klas verandert, pas je aan in *Leerlingen & codes*. De resultaten blijven bij die leerling, ook over meerdere schooljaren.

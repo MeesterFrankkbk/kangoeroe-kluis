@@ -15,6 +15,7 @@ const sessie = {
 };
 
 const S = { online: false, leerlingen: [], wie: null, resultaten: [], vak: opslag.get('kk_vak', 'taal'), toetsen: [] };
+const inVolgorde = () => !!(EIGEN.instellingen && EIGEN.instellingen.niveausInVolgorde);
 const volleNaam = l => `${l.voornaam} ${l.naam}`;
 
 async function api(actie, body) {
@@ -171,7 +172,7 @@ function toonHome() {
       el('div', { class: 'pips' }, [1, 2, 3, 4, 5].map(n => el('span', { class: `pip${n <= best ? ' m' + n : ''}`, title: NIVEAUS[n] }))));
   }));
   const med = spellen.reduce((a, s) => a + besteNiveau(s), 0);
-  toon(el('div', { class: 'home-kop' }, el('h1', {}, 'Kies een kluis'), el('div', { class: 'stil' }, `${VAKKEN[S.vak].naam}: ${med} van ${spellen.length * 5} medailles. Haal brons → zilver → goud → platinum → diamant.`)), tabs, raster);
+  toon(el('div', { class: 'home-kop' }, el('h1', {}, 'Kies een kluis'), el('div', { class: 'stil' }, `${VAKKEN[S.vak].naam}: ${med} van ${spellen.length * 5} medailles. ${inVolgorde() ? 'Haal brons → zilver → goud → platinum → diamant.' : 'Kies zelf op welk niveau je begint!'}`)), tabs, raster);
 }
 
 /* ---------- startscherm van een spel ---------- */
@@ -186,7 +187,7 @@ function toonStart(spel) {
     const best = besteNiveau(spel, thema);
     inhoud.replaceChildren(
       el('div', { class: 'niveaus' }, [1, 2, 3, 4, 5].map(n => {
-        const open = n <= best + 1;
+        const open = !inVolgorde() || n <= best + 1;
         return el('button', { class: `niveauknop n${n}${best >= n ? ' gehaald' : ''}`, disabled: !open, onclick: () => toonSpel(spel, n, bron) },
           medaille(n, 'groot' + (open ? '' : ' slot')), el('span', {}, NIVEAUS[n]), el('small', {}, best >= n ? 'gehaald' : open ? 'speel' : '🔒'));
       })),
@@ -199,7 +200,7 @@ function toonStart(spel) {
   toon(
     el('div', { class: 'spelkop' }, el('button', { class: 'knop tweede', onclick: toonHome }, '← Kluizen'), el('h1', {}, `${spel.icoon} ${spel.naam}`)),
     el('div', { class: 'uitleg' }, spel.uitleg),
-    keuze, spel.perThema ? el('p', { class: 'stil', style: 'text-align:center' }, 'Je medailles tellen per lijst of tekst.') : null, inhoud);
+    keuze, el('p', { class: 'stil', style: 'text-align:center' }, (inVolgorde() ? '' : 'Kies zelf je niveau: begin waar je denkt dat je uitdaging ligt. ') + (spel.perThema ? 'Je medailles tellen per lijst of tekst.' : '')), inhoud);
 }
 
 function toonLeer(spel, bron) {
@@ -245,7 +246,7 @@ function toonSpel(spel, niveau, bron) {
     if (!inst || klaar) return;
     pogingen++;
     const r = inst.controleer();
-    if (r.ok) gelukt(); else { fb.className = 'feedback fout'; fb.textContent = r.msg; }
+    if (r.ok) gelukt(); else { fb.className = 'feedback ' + (r.info ? 'hint' : 'fout'); fb.textContent = r.msg; }
   };
   const hintKnop = el('button', { class: 'knop paars', onclick: () => { if (!inst || klaar) return; hints++; fb.className = 'feedback hint'; fb.textContent = '💡 ' + inst.hint(); hintKnop.textContent = `💡 Hint (${hints})`; } }, '💡 Hint');
   toon(
