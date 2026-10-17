@@ -654,3 +654,227 @@ SPELLEN.push({
     };
   }
 });
+
+/* ================= Spreekwoordrebus ================= */
+/* Prentjeswoorden voor de spreekwoordrebus: [emoji, woord]. Enkel duidelijke, bekende prentjes. */
+const RB_PRENTJES = [
+  ['🐱', 'kat'], ['🐶', 'hond'], ['🐭', 'muis'], ['🐀', 'rat'], ['🐄', 'koe'], ['🐴', 'paard'], ['🐷', 'varken'], ['🐑', 'schaap'], ['🐐', 'geit'], ['🐔', 'kip'],
+  ['🐓', 'haan'], ['🐤', 'kuiken'], ['🦆', 'eend'], ['🦢', 'zwaan'], ['🦉', 'uil'], ['🦅', 'arend'], ['🦚', 'pauw'], ['🦜', 'papegaai'], ['🐧', 'pinguin'], ['🐝', 'bij'],
+  ['🐜', 'mier'], ['🕷️', 'spin'], ['🕸️', 'web'], ['🐌', 'slak'], ['🦋', 'vlinder'], ['🐛', 'rups'], ['🐟', 'vis'], ['🦈', 'haai'], ['🐳', 'walvis'], ['🐬', 'dolfijn'],
+  ['🦀', 'krab'], ['🐸', 'kikker'], ['🐍', 'slang'], ['🐢', 'schildpad'], ['🐊', 'krokodil'], ['🦁', 'leeuw'], ['🐯', 'tijger'], ['🐻', 'beer'], ['🐼', 'panda'], ['🐘', 'olifant'],
+  ['🦒', 'giraf'], ['🦓', 'zebra'], ['🐒', 'aap'], ['🦊', 'vos'], ['🐺', 'wolf'], ['🐰', 'konijn'], ['🦔', 'egel'], ['🦌', 'hert'], ['🐫', 'kameel'], ['🦇', 'vleermuis'],
+  ['🐙', 'octopus'], ['🦘', 'kangoeroe'], ['🐉', 'draak'], ['🦄', 'eenhoorn'], ['🦭', 'zeehond'], ['🦟', 'mug'], ['🪱', 'worm'], ['🦞', 'kreeft'], ['🦩', 'flamingo'],
+  ['🦷', 'tand'], ['👁️', 'oog'], ['👂', 'oor'], ['👃', 'neus'], ['👄', 'mond'], ['👅', 'tong'], ['🦶', 'voet'], ['🦵', 'been'], ['✋', 'hand'], ['👍', 'duim'],
+  ['💪', 'arm'], ['❤️', 'hart'], ['🦴', 'bot'], ['🧠', 'brein'], ['🧔', 'baard'],
+  ['🍎', 'appel'], ['🍐', 'peer'], ['🍌', 'banaan'], ['🍋', 'citroen'], ['🍇', 'druif'], ['🍓', 'aardbei'], ['🍒', 'kers'], ['🍍', 'ananas'], ['🥥', 'kokosnoot'], ['🥝', 'kiwi'],
+  ['🍉', 'meloen'], ['🥕', 'wortel'], ['🌽', 'mais'], ['🍅', 'tomaat'], ['🧅', 'ui'], ['🌶️', 'peper'], ['🥒', 'komkommer'], ['🥜', 'noot'], ['🌰', 'kastanje'], ['🍞', 'brood'],
+  ['🧀', 'kaas'], ['🥚', 'ei'], ['🍕', 'pizza'], ['🎂', 'taart'], ['🍪', 'koek'], ['🍦', 'ijs'], ['🍬', 'snoep'], ['🍭', 'lolly'], ['🍯', 'honing'], ['🥛', 'melk'],
+  ['☕', 'koffie'], ['🍵', 'thee'], ['🍺', 'bier'], ['🍷', 'wijn'], ['🧂', 'zout'], ['🌭', 'worst'], ['🍟', 'friet'], ['🍲', 'soep'], ['🍚', 'rijst'], ['🍔', 'hamburger'],
+  ['🥞', 'pannenkoek'], ['🧈', 'boter'], ['🥩', 'vlees'], ['🍫', 'chocolade'], ['🍩', 'donut'], ['🍿', 'popcorn'], ['🍳', 'pan'],
+  ['🏠', 'huis'], ['🚪', 'deur'], ['🪟', 'raam'], ['🛏️', 'bed'], ['🪑', 'stoel'], ['🛁', 'bad'], ['🔑', 'sleutel'], ['🔒', 'slot'], ['🔔', 'bel'], ['🕯️', 'kaars'],
+  ['💡', 'lamp'], ['⏰', 'wekker'], ['🕰️', 'klok'], ['📖', 'boek'], ['📚', 'boeken'], ['✏️', 'potlood'], ['🖊️', 'pen'], ['✂️', 'schaar'], ['📏', 'lat'], ['🔨', 'hamer'],
+  ['🪓', 'bijl'], ['🪚', 'zaag'], ['🧹', 'bezem'], ['🪣', 'emmer'], ['🧺', 'mand'], ['📦', 'doos'], ['✉️', 'brief'], ['📰', 'krant'], ['🗺️', 'kaart'], ['📞', 'telefoon'],
+  ['💻', 'laptop'], ['📺', 'tv'], ['📻', 'radio'], ['📷', 'camera'], ['🪜', 'ladder'], ['🧲', 'magneet'], ['🧼', 'zeep'], ['🧽', 'spons'], ['🥄', 'lepel'], ['🍴', 'vork'],
+  ['🔪', 'mes'], ['🥣', 'kom'], ['🍾', 'fles'], ['🏺', 'vaas'], ['🪞', 'spiegel'], ['🧦', 'sok'], ['👟', 'schoen'], ['👢', 'laars'], ['🎩', 'hoed'], ['🧢', 'pet'],
+  ['👑', 'kroon'], ['👓', 'bril'], ['💍', 'ring'], ['👜', 'tas'], ['👗', 'jurk'], ['👖', 'broek'], ['🧥', 'jas'], ['🧣', 'sjaal'], ['🧤', 'want'], ['☂️', 'paraplu'],
+  ['🎒', 'rugzak'], ['⌚', 'horloge'], ['🎀', 'strik'], ['⚽', 'bal'], ['🎈', 'ballon'], ['🎁', 'cadeau'], ['🪁', 'vlieger'], ['🎲', 'dobbelsteen'], ['🧩', 'puzzel'], ['🥁', 'trom'],
+  ['🎸', 'gitaar'], ['🎺', 'trompet'], ['🎻', 'viool'], ['🎹', 'piano'], ['📯', 'hoorn'], ['🎤', 'micro'], ['🤖', 'robot'], ['👻', 'spook'], ['🧙', 'tovenaar'], ['👸', 'prinses'],
+  ['🤴', 'prins'], ['🛡️', 'schild'], ['🗡️', 'zwaard'], ['🏹', 'boog'], ['🚀', 'raket'], ['🚢', 'schip'], ['⛵', 'boot'], ['⚓', 'anker'], ['🚗', 'auto'], ['🚌', 'bus'],
+  ['🚂', 'trein'], ['🚲', 'fiets'], ['🛴', 'step'], ['🚜', 'tractor'], ['✈️', 'vliegtuig'], ['🚁', 'helikopter'], ['🚕', 'taxi'], ['🚚', 'vrachtwagen'],
+  ['☀️', 'zon'], ['🌙', 'maan'], ['⭐', 'ster'], ['☁️', 'wolk'], ['🌧️', 'regen'], ['❄️', 'sneeuw'], ['🔥', 'vuur'], ['💧', 'druppel'], ['🌊', 'golf'], ['🌳', 'boom'],
+  ['🌲', 'den'], ['🌴', 'palm'], ['🌹', 'roos'], ['🌷', 'tulp'], ['🌸', 'bloem'], ['🍁', 'blad'], ['🍄', 'paddenstoel'], ['🌵', 'cactus'], ['⛰️', 'berg'], ['🌋', 'vulkaan'],
+  ['🏝️', 'eiland'], ['🏰', 'kasteel'], ['⛪', 'kerk'], ['🌉', 'brug'], ['⛺', 'tent'], ['🌈', 'regenboog'], ['⚡', 'bliksem'], ['🌍', 'aarde'], ['🪨', 'steen'], ['🪵', 'hout'],
+  ['🪶', 'veer'], ['🐚', 'schelp'], ['🧱', 'muur'], ['💰', 'geld'], ['🪙', 'munt'], ['💎', 'diamant'], ['👛', 'beurs'], ['🔟', 'tien'], ['💯', 'honderd'], ['❌', 'kruis'],
+  ['🚩', 'vlag'], ['🏅', 'medaille'], ['🏆', 'beker'], ['♟️', 'pion'], ['👶', 'baby'], ['👵', 'oma'], ['👴', 'opa'], ['👨', 'man'], ['👩', 'vrouw'], ['🤡', 'clown'],
+  ['🥷', 'ninja'], ['👼', 'engel'], ['⛄', 'sneeuwman'], ['🕵️', 'detective'], ['💋', 'kus'], ['🧵', 'draad'], ['🧶', 'wol'], ['🪡', 'naald'], ['🦺', 'vest'],
+  ['🧸', 'knuffel'], ['🪆', 'pop'], ['🏀', 'basketbal'], ['🛶', 'kano'], ['🎪', 'circus'], ['🗿', 'beeld'], ['🧭', 'kompas'], ['⏳', 'zandloper'], ['🔦', 'zaklamp'], ['🪤', 'val'],
+];
+
+/* Rebusmaker: zoekt bij een woord een prentje en de letterbewerkingen (s=t, -l) om het woord te vormen. */
+const rbLetters = w => U.zonderAccent(String(w)).toLowerCase().replace(/[^a-z]/g, '');
+function rbBewerkingen(b, t) {
+  const n = b.length, m = t.length, W = 2, INF = 1e9;
+  /* dp[i][j][s]: minimale kost om b[i:] en t[j:] te koppelen; s=1 als we in een wijzig-blok zitten */
+  const dp = Array.from({ length: n + 1 }, () => Array.from({ length: m + 1 }, () => [INF, INF]));
+  for (let i = n; i >= 0; i--) for (let j = m; j >= 0; j--) for (let s = 0; s < 2; s++) {
+    if (i === n && j === m) { dp[i][j][s] = 0; continue; }
+    let best = INF; const open = s ? 0 : W;
+    if (i < n && j < m && b[i] === t[j]) best = Math.min(best, dp[i + 1][j + 1][0]);
+    if (i < n) best = Math.min(best, 1 + open + dp[i + 1][j][1]);
+    if (j < m) best = Math.min(best, 1 + open + dp[i][j + 1][1]);
+    dp[i][j][s] = best;
+  }
+  /* terugvolgen naar blokken */
+  const blokken = []; let i = 0, j = 0, s = 0, kept = 0, cur = null;
+  while (i < n || j < m) {
+    const open = s ? 0 : W;
+    if (i < n && j < m && b[i] === t[j] && dp[i][j][s] === dp[i + 1][j + 1][0]) { if (cur) { blokken.push(cur); cur = null; } i++; j++; kept++; s = 0; continue; }
+    if (!cur) cur = { i0: i, i1: i, j0: j, j1: j };
+    if (i < n && dp[i][j][s] === 1 + open + dp[i + 1][j][1]) { i++; cur.i1 = i; s = 1; continue; }
+    j++; cur.j1 = j; s = 1;
+  }
+  if (cur) blokken.push(cur);
+  /* letters die er vooraan of achteraan bijkomen, staan naast het prentje */
+  let voor = '', achter = '';
+  if (blokken.length && blokken[0].i0 === 0 && blokken[0].i1 === 0) { voor = t.slice(0, blokken[0].j1); blokken.shift(); }
+  if (blokken.length && blokken.at(-1).i0 === n && blokken.at(-1).i1 === n) { achter = t.slice(blokken.at(-1).j0); blokken.pop(); }
+  /* elk blok uniek maken in het prentjeswoord */
+  const ops = blokken.map(k => {
+    let { i0, i1, j0, j1 } = k;
+    const tel = (a, z) => { const sub = b.slice(a, z); let c = 0, p = -1; while ((p = b.indexOf(sub, p + 1)) >= 0) c++; return c; };
+    let links = true;
+    while (i1 - i0 === 0 || tel(i0, i1) > 1) {
+      if (links && i0 > 0 && j0 > 0) { i0--; j0--; } else if (i1 < n && j1 < m) { i1++; j1++; } else if (i0 > 0 && j0 > 0) { i0--; j0--; } else return null;
+      links = !links;
+    }
+    const src = b.slice(i0, i1), dst = t.slice(j0, j1);
+    return dst ? `${src}=${dst}` : `-${src}`;
+  });
+  if (ops.some(o => o === null)) return null;
+  /* controle: na elkaar uitvoeren geeft het doelwoord en elke bron komt maar één keer voor */
+  let w = b;
+  for (const o of ops) {
+    const [src, dst] = o.startsWith('-') ? [o.slice(1), ''] : o.split('=');
+    const p = w.indexOf(src); if (p < 0 || w.indexOf(src, p + 1) >= 0) return null;
+    w = w.slice(0, p) + dst + w.slice(p + src.length);
+  }
+  if (voor + w + achter !== t) return null;
+  return { ops, voor, achter, kept, regios: ops.length + (voor ? 1 : 0) + (achter ? 1 : 0), kost: dp[0][0][0] };
+}
+/* Beste prentjes voor een woord. maxOps = maximum aantal bewerkingen. */
+function rbKandidaten(woord, maxOps = 2) {
+  const t = rbLetters(woord); if (!t) return [];
+  const uit = [];
+  for (const [e, naam] of RB_PRENTJES) {
+    const b = rbLetters(naam);
+    if (b === t) { uit.push({ e, naam, ops: [], voor: '', achter: '', score: 0 }); continue; }
+    const r = rbBewerkingen(b, t);
+    if (!r || r.regios > maxOps) continue;
+    if (r.kept < Math.max(1, Math.ceil(t.length * .5)) || r.kept < b.length * .4) continue;
+    uit.push({ e, naam, ops: r.ops, voor: r.voor, achter: r.achter, score: r.regios * 3 + (b.length - r.kept) + (t.length - r.kept) });
+  }
+  return uit.sort((a, c) => a.score - c.score);
+}
+
+/* Spreekwoorden die op de werkbladen van de school staan: niet gebruiken in de app (behalve in eigen lijsten). */
+const RB_WERKBLAD = ['grieks', 'chinees', 'beste wil van de wereld', 'god in frankrijk', 'land der blinden', 'keulen', 'rome', 'parijs', 'sinterklaas', 'piet', 'liefde',
+  'beentje', 'eerlijk duurt', 'schoen wringt', 'onder de knie', 'hoedje', 'haar op', 'held op sokken', 'met de pet', 'stok in de wielen', 'mouw', 'schaapjes', 'blaffende',
+  'kat in de zak', 'handdoek', 'kam scheren', 'ivoren toren', 'water bij de wijn', 'huisje', 'eerst komt', 'leergeld', 'wat voor vlees', 'strepen', 'volle laag', 'lontje',
+  'kiespijn', 'zwarte sneeuw', 'vermoorde onschuld'];
+INGEBOUWD.zinnen.push({ id: 'rb-alles', naam: 'Spreekwoorden: alles door elkaar', zinnen: INGEBOUWD.zinnen.filter(b => b.id.startsWith('rb-')).flatMap(b => b.zinnen) });
+const rbZinnen = bron => {
+  const lijst = (bron?.zinnen || []).map(r => { const [z, ...b] = String(r).split(/\s*;\s*/); return { z: z.trim(), b: b.join('; ').trim() }; }).filter(x => x.z);
+  return bron?.eigen ? lijst : lijst.filter(x => !RB_WERKBLAD.some(w => U.zonderAccent(x.z).toLowerCase().includes(w)));
+};
+/* Een zin in stukjes: woorden en leestekens */
+const rbStukken = z => (z.match(/[A-Za-zÀ-ÿ'’-]+|[^\sA-Za-zÀ-ÿ'’-]+/g) || []).map(s => /[A-Za-zÀ-ÿ]/.test(s) ? { woord: s } : { teken: s });
+function rbKies(woord, maxOps) {
+  const k = rbKandidaten(woord, maxOps);
+  if (k.length) { const top = k.filter(x => x.score <= k[0].score + 2).slice(0, 4); return { ...U.pick(top), delen: null }; }
+  /* lang woord: splitsen over twee prentjes */
+  const t = rbLetters(woord); if (t.length < 6) return null;
+  let best = null;
+  for (let i = 3; i <= t.length - 3; i++) {
+    const a = rbKandidaten(t.slice(0, i), Math.min(2, maxOps))[0], b = rbKandidaten(t.slice(i), Math.min(2, maxOps))[0];
+    if (a && b && (!best || a.score + b.score < best.score)) best = { score: a.score + b.score + 2, delen: [a, b] };
+  }
+  return best;
+}
+/* Vakjes: één vakje per letter, de cursor springt vanzelf verder */
+function rbVakjes(n, vrij) {
+  if (vrij) { const i = U.tekst('tekst sr-vrij', ''); i.style.width = `${Math.max(4, n + 2)}ch`; return { el: i, waarde: () => i.value, zet: v => { i.value = v; i.readOnly = true; }, inputs: [i] }; }
+  const inputs = Array.from({ length: n }, () => U.el('input', { class: 'sr-vak', maxlength: 1, autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' }));
+  inputs.forEach((i, k) => {
+    i.addEventListener('input', () => {
+      const v = i.value.replace(/\s/g, '');
+      if (v.length > 1) { [...v].forEach((c, j) => { if (inputs[k + j]) inputs[k + j].value = c; }); inputs[Math.min(n - 1, k + v.length)]?.focus(); return; }
+      i.value = v; if (v && inputs[k + 1]) inputs[k + 1].focus();
+    });
+    i.addEventListener('keydown', e => { if (e.key === 'Backspace' && !i.value && inputs[k - 1]) { inputs[k - 1].focus(); inputs[k - 1].value = ''; e.preventDefault(); } if (e.key === 'ArrowLeft') inputs[k - 1]?.focus(); if (e.key === 'ArrowRight') inputs[k + 1]?.focus(); });
+  });
+  return { el: U.el('span', { class: 'sr-vakjes' }, inputs), waarde: () => inputs.map(i => i.value).join(''), zet: v => { [...rbLetters(v)].forEach((c, k) => { if (inputs[k]) { inputs[k].value = c; inputs[k].readOnly = true; } }); }, inputs };
+}
+/* Eén rebuswoord: prentje + bewerkingen + vakjes */
+function rbWoord(woord, keuze, vrij) {
+  const doel = rbLetters(woord), vak = rbVakjes(doel.length, vrij);
+  const naam = U.el('small', { class: 'sr-naam' }, '');
+  const deel = k => U.el('div', { class: 'sr-deel' },
+    U.el('div', { class: 'sr-prent' }, k.voor ? U.el('span', { class: 'sr-extra' }, k.voor) : null, U.el('span', { class: 'sr-emoji' }, k.e), k.achter ? U.el('span', { class: 'sr-extra' }, k.achter) : null),
+    U.el('div', { class: 'sr-ops' }, k.ops.map(o => U.el('span', {}, o))));
+  const delen = keuze.delen || [keuze];
+  const el = U.el('div', { class: 'sr-woord' }, U.el('div', { class: 'sr-delen' }, delen.map(deel)), naam, vak.el);
+  vak.inputs.forEach(i => i.addEventListener('input', () => { el.classList.remove('goed', 'fout'); vak.inputs.forEach(x => U.mark(x, '')); }));
+  let hints = 0;
+  const ok = () => rbLetters(vak.waarde()) === doel;
+  return {
+    el, woord,
+    status() { const v = vak.waarde().trim(); return v ? ok() : null; },
+    markeer() { if (vak.waarde().trim() && !vak.inputs[0].readOnly) vak.inputs.forEach(i => U.mark(i, ok() ? 'goed' : 'fout')); },
+    hint() { hints++; if (hints === 1 && !naam.textContent) { naam.textContent = '= ' + delen.map(k => k.naam).join(' + '); return; } vak.zet(woord); vak.inputs.forEach(i => U.mark(i, 'hint')); },
+  };
+}
+function rbZinBlok(zin, n, nummer) {
+  const maxOps = n >= 5 ? 3 : 2;
+  const stukken = rbStukken(zin.z).map(s => s.woord ? { ...s, keuze: rbKies(s.woord, maxOps) } : s);
+  if (n === 2) { /* zilver: ongeveer de helft van de woorden als rebus, de rest staat er gewoon */
+    const met = stukken.filter(s => s.keuze).sort((a, c) => a.keuze.score - c.keuze.score);
+    const houd = new Set(met.slice(0, Math.max(2, Math.ceil(stukken.filter(s => s.woord).length * .6))));
+    stukken.forEach(s => { if (s.keuze && !houd.has(s)) s.keuze = null; });
+  }
+  const rijen = [];
+  const el = U.el('div', { class: 'sr-zin' }, nummer ? U.el('b', { class: 'sr-nr' }, nummer) : null, stukken.map(s => {
+    if (s.teken) return U.el('span', { class: 'sr-teken' }, s.teken);
+    if (!s.keuze) return U.el('span', { class: 'sr-gewoon' }, s.woord);
+    const r = rbWoord(s.woord, s.keuze, n === 5); rijen.push(r); return r.el;
+  }));
+  return { el, rijen, aandeel: rijen.length / Math.max(1, stukken.filter(s => s.woord).length) };
+}
+SPELLEN.push({
+  id: 'spreekwoordrebus', naam: 'Spreekwoordrebus', vak: 'taal', icoon: '🖼️', bron: 'zinnen', standaardBron: 'rb-alles',
+  kort: 'Elk woord is een prentje met letterbewerkingen.',
+  uitleg: 'Elk prentje is een woord. Pas de letters aan zoals eronder staat: k=d betekent "vervang de k door een d", -l betekent "haal de l weg". Letters naast het prentje komen er vooraan of achteraan bij. Brons: losse woorden. Zilver en goud: een spreekwoord (op goud kies je ook de betekenis). Platinum: koppel spreekwoorden aan hun betekenis. Diamant: zonder lettervakjes.',
+  leer(doos) {
+    const vb = [['dat', 'kat'], ['een', 'eend'], ['voor', 'oor'], ['zijn', 'wijn'], ['staan', 'maan']];
+    doos.append(U.el('p', { class: 'opdracht' }, 'Zo lees je een rebus: zeg wat je ziet en pas de letters aan.'),
+      U.el('div', { class: 'sr-leer' }, vb.map(([w, p]) => { const k = rbKandidaten(w, 2).find(x => x.naam === p) || rbKandidaten(w, 2)[0]; const r = rbWoord(w, k); r.hint(); r.hint(); return U.el('div', { class: 'sr-vb' }, r.el, U.el('p', {}, `${k.e} = ${k.naam}`, U.el('br'), [k.voor ? `zet ${k.voor} vooraan` : '', ...k.ops.map(o => o.startsWith('-') ? `haal ${o.slice(1)} weg` : `vervang ${o.replace('=', ' door ')}`), k.achter ? `zet ${k.achter} achteraan` : ''].filter(Boolean).join(', '), U.el('br'), '→ ', U.el('b', {}, w))); })),
+      U.el('p', { class: 'stil' }, 'Tip: tel de vakjes. Zo weet je hoeveel letters het woord heeft.'));
+  },
+  maak(n, doos, ctx) {
+    const zinnen = U.shuffle(rbZinnen(ctx?.bron));
+    if (!zinnen.length) { doos.append(U.el('p', {}, 'Deze lijst heeft geen zinnen. Kies een andere lijst.')); return { controleer: () => ({ ok: false, msg: 'Kies een andere lijst.' }), hint: () => '' }; }
+    let rijen = [];
+    if (n === 1) { /* losse woorden */
+      const woorden = U.shuffle([...new Set(zinnen.flatMap(z => rbStukken(z.z).filter(s => s.woord && rbLetters(s.woord).length >= 3).map(s => s.woord.toLowerCase())))]);
+      const gekozen = [];
+      for (const w of woorden) { if (gekozen.length >= 6) break; const k = rbKies(w, 1); if (k && !k.delen && k.score <= 6 && k.ops.length + (k.voor ? 1 : 0) + (k.achter ? 1 : 0) >= 1) gekozen.push(rbWoord(w, k)); }
+      rijen = gekozen;
+      doos.append(U.el('p', { class: 'opdracht' }, 'Welk woord zoeken we? Elk woord komt uit een spreekwoord.'), U.el('div', { class: 'sr-woorden' }, rijen.map(r => r.el)));
+    } else {
+      const aantal = n === 4 ? 3 : 1;
+      const blokken = [];
+      for (const z of zinnen) { if (blokken.length >= aantal) break; if (n >= 3 && !z.b && ctx?.bron && !ctx.bron.eigen) continue; const b = rbZinBlok(z, n, aantal > 1 ? blokken.length + 1 : null); if (b.aandeel >= (n === 2 ? .4 : .6)) blokken.push({ ...b, zin: z }); }
+      if (!blokken.length) { const z = zinnen[0]; blokken.push({ ...rbZinBlok(z, n), zin: z }); }
+      rijen = blokken.flatMap(b => b.rijen);
+      doos.append(U.el('p', { class: 'opdracht' }, aantal > 1 ? 'Los de rebussen op en koppel elk spreekwoord aan zijn betekenis.' : 'Los de rebus op.'), U.el('div', { class: 'sr-zinnen' }, blokken.map(b => b.el)));
+      const metB = blokken.filter(b => b.zin.b);
+      if (n === 3 || n === 5) {
+        const b = metB[0];
+        if (b) { const pool = [...new Set(alleZinItems(ctx).map(x => x.b).filter(x => x && x !== b.zin.b))]; const opties = U.shuffle([b.zin.b, ...U.shuffle(pool).slice(0, 3)]); const mc = rijMC('Wat betekent dit spreekwoord?', opties, opties.indexOf(b.zin.b)); doos.append(mc.el); rijen.push(mc); }
+      }
+      if (n === 4 && metB.length > 1) {
+        const tabel = U.el('div', { class: 'sr-koppel' }, U.el('b', {}, 'Welk nummer past bij de betekenis?'));
+        U.shuffle(metB.map(b => b)).forEach(b => {
+          const nr = blokken.indexOf(b) + 1;
+          const sel = U.el('select', { class: 'veld' }, U.el('option', { value: '' }, '…'), blokken.map((x, k) => U.el('option', { value: k + 1 }, k + 1)));
+          const el = U.el('label', { class: 'sr-kop-rij' }, U.el('span', {}, b.zin.b), sel);
+          sel.addEventListener('change', () => el.classList.remove('goed', 'fout'));
+          rijen.push({ el, status: () => sel.value ? Number(sel.value) === nr : null, hint() { sel.value = nr; sel.disabled = true; el.classList.add('hint'); } });
+          tabel.append(el);
+        });
+        doos.append(tabel);
+      }
+    }
+    const spel = rijenSpel(rijen);
+    return { ...spel, hint() { const open = rijen.filter(r => r.status() !== true); if (!open.length) return 'Alles is juist!'; const r = U.pick(open); r.hint(); r.el.classList.remove('fout'); return 'Een hulpje: bij een prentje staat nu wat het voorstelt, of een antwoord is ingevuld.'; } };
+  }
+});

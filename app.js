@@ -182,7 +182,7 @@ function toonStart(spel) {
   stopSpel(); kop();
   const soort = spel.bron, lijst = soort ? bronnen(soort) : [];
   const gekozenId = opslag.get('kk_bron_' + spel.id, null);
-  let bron = soort ? (lijst.find(b => b.id === gekozenId) || lijst[0]) : null;
+  let bron = soort ? (lijst.find(b => b.id === gekozenId) || lijst.find(b => b.eigen) || lijst.find(b => b.id === spel.standaardBron) || lijst[0]) : null;
   const inhoud = el('div');
   const teken = () => {
     const thema = spel.perThema ? bron?.id : undefined;

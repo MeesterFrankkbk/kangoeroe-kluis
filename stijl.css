@@ -532,3 +532,24 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .ld-teken { color: var(--oranje-d); }
 .ld-ster { width: 1.05em; height: 1.05em; }
 .ld-leer { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: .8rem; } .ld-vb { display: flex; gap: .8rem; align-items: center; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem; } .ld-vb p { margin: .15rem 0; } .ld-vb .ld-beeld { min-height: 7rem; min-width: 8.5rem; font-size: 1.7rem; }
+/* ---------- spreekwoordrebus ---------- */
+.sr-zinnen { display: grid; gap: 1rem; }
+.sr-zin { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .9rem .7rem; padding: .8rem; border: 2px solid var(--lijn); border-radius: 14px; background: #fff; }
+.sr-nr { align-self: flex-start; background: var(--teal); color: #fff; border-radius: 99px; width: 1.8rem; height: 1.8rem; display: grid; place-items: center; }
+.sr-woorden { display: flex; flex-wrap: wrap; gap: 1rem; }
+.sr-woord { display: inline-flex; flex-direction: column; align-items: center; gap: .2rem; padding: .4rem .5rem; border-radius: 12px; background: var(--papier); border: 2px solid transparent; }
+.sr-woord.goed { border-color: var(--goed); background: var(--goed-l); } .sr-woord.fout { border-color: var(--fout); }
+.sr-prent { display: flex; align-items: center; gap: .15rem; } .sr-emoji { font-size: 2.8rem; line-height: 1.1; }
+.sr-extra { font: 700 1.4rem 'Fredoka', sans-serif; color: var(--oranje-d); }
+.sr-ops { display: flex; flex-direction: column; align-items: center; font: 700 1rem 'Fredoka', sans-serif; color: #1F2A2E; min-height: 1.2em; line-height: 1.2; }
+.sr-naam { color: var(--hint); font-weight: 800; min-height: 1em; }
+.sr-vakjes { display: flex; gap: 2px; }
+.sr-vak { width: 1.55rem; height: 1.9rem; text-align: center; font: 700 1.05rem 'Nunito', sans-serif; border: 1.5px solid #9a9488; border-radius: 4px; padding: 0; background: #fff; text-transform: lowercase; }
+.sr-vak:focus { outline: 2px solid var(--oranje); border-color: var(--oranje); }
+.sr-vak.goed { background: var(--goed-l); border-color: var(--goed); } .sr-vak.fout { background: #FDECEA; border-color: var(--fout); } .sr-vak.hint { background: var(--hint-l); border-color: var(--hint); }
+.sr-vrij { padding: .25rem .4rem; text-align: center; }
+.sr-gewoon { font: 700 1.3rem 'Fredoka', sans-serif; padding-bottom: .3rem; } .sr-teken { font: 700 1.4rem 'Fredoka', sans-serif; padding-bottom: .3rem; margin-left: -.5rem; }
+.sr-koppel { display: grid; gap: .4rem; margin-top: 1rem; } .sr-kop-rij { display: flex; justify-content: space-between; align-items: center; gap: .8rem; border: 1.5px solid var(--lijn); border-radius: 10px; padding: .4rem .7rem; }
+.sr-kop-rij.goed { border-color: var(--goed); background: var(--goed-l); } .sr-kop-rij.fout { border-color: var(--fout); } .sr-kop-rij.hint { border-color: var(--hint); }
+.sr-leer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .8rem; } .sr-vb { display: flex; gap: .8rem; align-items: center; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem; } .sr-vb p { margin: 0; }
+.sr-delen { display: flex; gap: .6rem; align-items: flex-start; } .sr-deel { display: flex; flex-direction: column; align-items: center; }
