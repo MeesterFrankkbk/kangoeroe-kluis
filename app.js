@@ -161,7 +161,9 @@ function toonHome() {
   const open = S.toetsen.filter(x => x.status !== 'ingeleverd').length;
   const tabs = el('div', { class: 'vaktabs' },
     Object.entries(VAKKEN).map(([k, v]) => el('button', { 'data-vak': k, class: S.vak === k ? 'aan' : '', onclick: () => { S.vak = k; opslag.set('kk_vak', k); toonHome(); } }, `${v.icoon} ${v.naam}`)),
+    el('button', { 'data-vak': 'paspoort', class: S.vak === 'paspoort' ? 'aan' : '', onclick: () => { S.vak = 'paspoort'; toonHome(); } }, '🛂 Mijn paspoort'),
     S.online ? el('button', { 'data-vak': 'toetsen', class: S.vak === 'toetsen' ? 'aan' : '', onclick: () => { S.vak = 'toetsen'; toonHome(); laadToetsen(); } }, '🗒️ Toetsen', el('span', { class: 'teller', style: open ? '' : 'display:none' }, String(open || ''))) : null);
+  if (S.vak === 'paspoort') { toon(el('div', { class: 'home-kop' }, el('h1', {}, 'Mijn Kangoeroe-paspoort')), tabs, el('div', { id: 'pp' }, el('p', { class: 'laden' }, 'Even laden…'))); toonPaspoort(); return; }
   if (S.vak === 'toetsen') { toon(el('div', { class: 'home-kop' }, el('h1', {}, 'Toetsen')), tabs, toetsLijst()); return; }
   const spellen = SPELLEN.filter(s => s.vak === S.vak);
   const raster = el('div', { class: 'raster' }, spellen.map(s => {
@@ -363,6 +365,106 @@ function toonToets(toets, antwoorden, serverNu) {
     toets.vragen.some(v => v.taal === 'fr') ? accentBalk() : null,
     el('div', { class: 'speelveld' }, lijst),
     el('div', { class: 'acties' }, el('button', { class: 'knop', onclick: () => inleveren(false) }, '📨 Inleveren'), el('button', { class: 'knop tweede', onclick: () => verlaatSpel(() => { S.vak = 'toetsen'; toonHome(); laadToetsen(); }) }, 'Later verder')));
+}
+
+/* ---------- Kangoeroe-paspoort ---------- */
+let PP = null, PP_VAN = null, ppTimer = null;
+const ppMelding = () => document.getElementById('pp-melding');
+async function laadPaspoort() {
+  if (PP && PP_VAN === S.wie.id) return;
+  PP = null;
+  if (S.online) { try { PP = (await api('paspoort', sleutel())).paspoort; } catch { } }
+  PP = normPaspoort(PP || opslag.get('kk_pp_' + S.wie.id, null)); PP_VAN = S.wie.id;
+}
+function bewaarPaspoort() {
+  opslag.set('kk_pp_' + S.wie.id, PP);
+  const m = ppMelding(); if (m) m.textContent = 'Bewaren…';
+  if (!S.online) { if (m) m.textContent = 'Bewaard op deze computer ✓'; return; }
+  clearTimeout(ppTimer);
+  ppTimer = setTimeout(async () => {
+    try { const r = await api('paspoort-bewaar', { ...sleutel(), paspoort: PP }); PP.reflecties = r.paspoort.reflecties; if (ppMelding()) ppMelding().textContent = 'Bewaard ✓'; }
+    catch { if (ppMelding()) ppMelding().textContent = '⚠ Niet bewaard: geen verbinding. Probeer later opnieuw.'; }
+  }, 700);
+}
+async function toonPaspoort() {
+  await laadPaspoort();
+  const doos = document.getElementById('pp'); if (!doos) return;
+  S.ppTab = S.ppTab || 'ik';
+  S.ppJaar = S.ppJaar || schooljaarVan();
+  const jaren = paspoortJaren(PP, S.resultaten).filter(j => j <= schooljaarVan());
+  if (!jaren.includes(S.ppJaar)) S.ppJaar = schooljaarVan();
+  const groei = groeiVan(S.resultaten, paspoortJaren(PP, S.resultaten));
+  const jaarKeuze = () => el('select', { class: 'veld', onchange: e => { S.ppJaar = e.target.value; toonPaspoort(); } }, jaren.map(j => el('option', { value: j, selected: j === S.ppJaar }, `Schooljaar ${j}`)));
+  const tabs = { ik: '🙋 Dit ben ik', uitdagingen: '🗺️ Mijn uitdagingen', reflectie: '💭 Reflectie', groei: '📈 Mijn groei' };
+  const inhoud = el('div', { class: 'speelveld' });
+  doos.replaceChildren(
+    el('div', { class: 'pp-balk' }, el('div', { class: 'filters' }, Object.entries(tabs).map(([k, v]) => el('button', { class: S.ppTab === k ? 'aan' : '', onclick: () => { S.ppTab = k; toonPaspoort(); } }, v))),
+      el('span', { id: 'pp-melding', class: 'stil' }), el('button', { class: 'knop tweede klein', onclick: () => drukPaspoort([{ leerling: S.wie, paspoort: PP, resultaten: S.resultaten, jaar: S.ppJaar }]) }, '🖨 Afdrukken')),
+    inhoud);
+  const tekstvak = (obj, k, rijen = 2, ph = '') => { const t = el('textarea', { class: 'tekst', rows: rijen, placeholder: ph }); t.value = obj[k] || ''; t.addEventListener('input', () => { obj[k] = t.value; bewaarPaspoort(); }); return t; };
+  if (S.ppTab === 'ik') {
+    const dit = PP.ditBenIk[S.ppJaar] = PP.ditBenIk[S.ppJaar] || {};
+    const vorig = jaren.filter(j => j < S.ppJaar).reverse().map(j => PP.ditBenIk[j]).find(Boolean) || {};
+    inhoud.append(el('div', { class: 'knoppenrij' }, jaarKeuze()),
+      el('p', { class: 'opdracht' }, 'Vertel iets over jezelf. Elk schooljaar vul je dit opnieuw in: zo zie je hoe je verandert.'),
+      el('div', { class: 'pp-raster' }, DIT_BEN_IK.map(([k, l]) => el('label', { class: 'pp-vak' }, el('b', {}, l), tekstvak(dit, k, 2), vorig[k] ? el('small', { class: 'stil' }, 'Vorig jaar: ' + vorig[k]) : null))));
+  }
+  if (S.ppTab === 'uitdagingen') {
+    const gj = groeiVan(S.resultaten, [S.ppJaar])[0];
+    inhoud.append(el('div', { class: 'knoppenrij' }, jaarKeuze()),
+      el('div', { class: 'label' }, 'Mijn medailles in de Kangoeroe-Kluis (vult zichzelf in)'),
+      el('p', { class: 'stil' }, 'Gekleurd = behaald dit schooljaar · ✓ = al behaald in een vorig schooljaar · grijs = nog te halen.'),
+      el('div', { class: 'pp-kluizen' }, appVakken().map(({ k }) => { const v = gj.vakken[k]; return el('div', { class: 'pp-kluis' },
+        el('div', { class: 'pp-kluis-kop' }, el('b', {}, `${VAKKEN[k].icoon} ${VAKKEN[k].naam}`), el('small', {}, `${v.med}/${v.max} medailles${v.nieuw ? ` · ${v.nieuw} nieuw dit jaar` : ''}`)),
+        el('div', { class: 'pp-meter' }, el('i', { style: `width:${100 * v.med / v.max}%` })),
+        spellenVan(k).map(sp => { const m = gj.medailles[sp.id]; return el('div', { class: 'pp-ond' }, el('span', {}, `${sp.icoon || ''} ${sp.naam}`),
+          el('span', { class: 'pp-med' }, [1, 2, 3, 4, 5].map(n => medaille(n, n <= m.eerder ? 'eerder' : n <= m.nu ? '' : 'slot')))); })); })),
+      el('div', { class: 'label' }, 'Andere uitdagingen (vul zelf in)'),
+      el('div', { class: 'pp-lijst' }, paspoortUitdagingen().map(naam => {
+        PP.uitdagingen[naam] = PP.uitdagingen[naam] || {};
+        const u = PP.uitdagingen[naam][S.ppJaar] = PP.uitdagingen[naam][S.ppJaar] || {};
+        const rij = el('div', { class: 'pp-uit' });
+        const teken = () => rij.replaceChildren(
+          el('b', { class: 'pp-naam' }, naam),
+          el('div', { class: 'pp-status' }, [['nog', 'Nog niet'], ['bezig', 'Bezig'], ['klaar', 'Klaar ✔']].map(([w, t]) => el('button', { class: u.status === w ? 'aan ' + w : '', onclick: () => { u.status = w; if (w !== 'nog' && !u.datum) u.datum = new Date().toLocaleDateString('nl-BE'); bewaarPaspoort(); teken(); } }, t))),
+          el('div', { class: 'pp-med', title: 'Mijn niveau' }, [1, 2, 3, 4, 5].map(n => el('button', { onclick: () => { u.niveau = u.niveau === n ? 0 : n; bewaarPaspoort(); teken(); } }, medaille(n, (u.niveau || 0) >= n ? '' : 'slot')))),
+          el('div', { class: 'pp-gevoel', title: 'Hoe voelde het?' }, GEVOEL.map((e, i) => el('button', { class: u.gevoel === i + 1 ? 'aan' : '', onclick: () => { u.gevoel = i + 1; bewaarPaspoort(); teken(); } }, e))),
+          (() => { const i = U.tekst('tekst pp-notitie', 'Korte notitie…'); i.value = u.notitie || ''; i.addEventListener('input', () => { u.notitie = i.value; bewaarPaspoort(); }); return i; })());
+        teken(); return rij;
+      })),
+      el('p', { class: 'stil' }, 'Niveaus: brons = ik ken de basis · zilver = het lukt meestal · goud = het lukt vlot · platinum = ik kan het uitleggen · diamant = ik zoek er zelf nog moeilijkere uitdagingen bij.'));
+  }
+  if (S.ppTab === 'reflectie') {
+    const r = S.ppBewerk || { id: 'r' + Date.now().toString(36), schooljaar: schooljaarVan(), periode: periodeVan(), datum: new Date().toISOString() };
+    const schaal = (k, labels) => el('div', { class: 'pp-schaal' }, labels.map((t, i) => el('button', { class: r[k] === i + 1 ? 'aan' : '', onclick: e => { r[k] = i + 1; e.target.parentNode.querySelectorAll('button').forEach((b, j) => b.classList.toggle('aan', j === i)); } }, t)));
+    const velden = Object.fromEntries(REFLECTIEVRAGEN.map(([k]) => { const t = el('textarea', { class: 'tekst', rows: 2 }); t.value = r[k] || ''; return [k, t]; }));
+    const periode = el('select', { class: 'veld' }, PERIODES.map((p, i) => el('option', { value: i, selected: r.periode === i }, `${p} · ${r.schooljaar}`)));
+    inhoud.append(el('h2', {}, S.ppBewerk ? 'Reflectie aanpassen' : 'Nieuwe reflectie'),
+      el('div', { class: 'knoppenrij' }, periode),
+      el('div', { class: 'pp-raster' },
+        el('div', { class: 'pp-vak' }, el('b', {}, 'Hoe gemotiveerd was ik?'), schaal('motivatie', GEVOEL)),
+        el('div', { class: 'pp-vak' }, el('b', {}, 'Hoeveel uitdaging voelde ik?'), schaal('uitdaging', ['te makkelijk', 'makkelijk', 'precies goed', 'pittig', 'te moeilijk']))),
+      el('div', { class: 'pp-raster' }, REFLECTIEVRAGEN.map(([k, l]) => el('label', { class: 'pp-vak' }, el('b', {}, l), velden[k]))),
+      el('div', { class: 'knoppenrij' },
+        el('button', { class: 'knop', onclick: () => {
+          REFLECTIEVRAGEN.forEach(([k]) => r[k] = velden[k].value.trim()); r.periode = Number(periode.value);
+          if (!REFLECTIEVRAGEN.some(([k]) => r[k])) { ppMelding().textContent = 'Schrijf eerst iets in je reflectie.'; return; }
+          const k = PP.reflecties.findIndex(x => x.id === r.id); if (k >= 0) PP.reflecties[k] = r; else PP.reflecties.push(r);
+          S.ppBewerk = null; bewaarPaspoort(); toonPaspoort();
+        } }, '💾 Bewaar reflectie'),
+        S.ppBewerk ? el('button', { class: 'knop tweede', onclick: () => { S.ppBewerk = null; toonPaspoort(); } }, 'Annuleer') : null));
+    const oud = [...PP.reflecties].sort((a, b) => b.datum.localeCompare(a.datum));
+    if (oud.length) inhoud.append(el('h2', { style: 'margin-top:1.5rem' }, 'Mijn reflecties'), el('div', { class: 'pp-reflecties' }, oud.map(x => el('div', { class: 'pp-reflectie' },
+      el('div', { class: 'pp-r-kop' }, el('b', {}, `${PERIODES[x.periode]} · ${x.schooljaar}`), el('span', {}, x.motivatie ? GEVOEL[x.motivatie - 1] : ''), el('button', { class: 'knop klein tweede', onclick: () => { S.ppBewerk = JSON.parse(JSON.stringify(x)); toonPaspoort(); scrollTo(0, 0); } }, 'Aanpassen')),
+      REFLECTIEVRAGEN.filter(([k]) => x[k]).map(([k, l]) => el('p', {}, el('b', {}, l + ' '), x[k])),
+      x.feedback ? el('div', { class: 'pp-feedback' }, el('b', {}, '💬 Feedback van je leerkracht: '), x.feedback.tekst) : null))));
+  }
+  if (S.ppTab === 'groei') {
+    inhoud.append(el('p', { class: 'opdracht' }, 'Zo groei je in de Kangoeroe-Kluis, over 3 schooljaren. Elke kluis telt 5 medailles per onderdeel.'),
+      el('div', { class: 'pp-groei' }, groei.filter(g => !g.toekomst).map((g, i) => el('div', { class: 'pp-jaar' }, el('h3', {}, `Jaar ${i + 1} · ${g.jaar}`),
+        appVakken().map(({ k }) => { const v = g.vakken[k]; return el('div', { class: 'pp-balk-rij' }, el('span', {}, `${VAKKEN[k].icoon} ${VAKKEN[k].naam}`), el('div', { class: 'pp-meter' }, el('i', { style: `width:${v.max ? 100 * v.med / v.max : 0}%` })), el('small', {}, `${v.med}/${v.max}`)); }),
+        el('p', { class: 'stil' }, `Kluizen gekraakt: ${g.gekraakt} · reflecties: ${PP.reflecties.filter(r => r.schooljaar === g.jaar).length}`)))));
+  }
 }
 
 window.addEventListener('online', verstuurWachtrij);

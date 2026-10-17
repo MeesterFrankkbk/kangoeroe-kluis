@@ -38,6 +38,17 @@ Belangrijk: **upload het zip-bestand niet zelf** naar GitHub en gebruik **geen N
 ### Later iets aanpassen (bv. een nieuwe versie)
 Pak de nieuwe zip uit. Open je repository op GitHub → **Add file → Upload files** → sleep opnieuw de volledige inhoud van de map erin (bestaande bestanden worden overschreven, nieuwe toegevoegd) → **Commit changes**. Netlify zet de nieuwe versie zelf online. Leerlingen, resultaten, eigen inhoud en toetsen blijven bewaard.
 
+## Kangoeroe-paspoort
+Het paspoort volgt een leerling 3 schooljaren lang:
+- **Blad 1 – Dit ben ik** (voor 3 jaar): één kolom per schooljaar.
+- **Mijn medailles** (per schooljaar): alle onderdelen van elke kluis. In de app en op het ingevulde blad wordt dit automatisch ingevuld. ✓ = behaald in een vorig jaar, gekleurd = behaald dit jaar.
+- **Andere uitdagingen** (per schooljaar): De aarde, Planeten, Ridders … De lijst pas je aan bij **Eigen inhoud → Instellingen**.
+- **Reflectie** (per periode).
+- **Mijn groei** (voor 3 jaar): per kluis 1 blokje per 5 medailles. Een kluis heeft dus evenveel blokjes als onderdelen.
+
+Leerlingen vullen dit in via het tabblad **🛂 Mijn paspoort**. Jij ziet het paspoort onderaan bij elke leerling in het overzicht en schrijft daar feedback bij de reflecties.
+Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
+
 ## Goed om te weten
 - Een leerling die van klas verandert, pas je aan in *Leerlingen & codes*. De resultaten blijven bij die leerling, ook over meerdere schooljaren.
 - Eigen inhoud (woordenlijsten, zinnen, Franse en Engelse lijsten, werkwoorden, teksten) maak je bij **Eigen inhoud**. Leerlingen zien die met een ★ bovenaan de keuzelijst.

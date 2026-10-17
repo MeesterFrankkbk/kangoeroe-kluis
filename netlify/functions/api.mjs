@@ -133,7 +133,40 @@ export default async (req) => {
       return json({ ok: true, score: t.toonScore ? b.score : null, max: t.toonScore ? b.max : null });
     }
 
+    /* ---------- paspoort ---------- */
+    case 'paspoort': {
+      const l = await leerling(); if (!l) return nietLl();
+      return json({ paspoort: (await store.get('paspoort/' + l.id, { type: 'json' })) || null });
+    }
+    case 'paspoort-bewaar': {
+      const l = await leerling(); if (!l) return nietLl();
+      const nieuw = body.paspoort && typeof body.paspoort === 'object' ? body.paspoort : null;
+      if (!nieuw || JSON.stringify(nieuw).length > 300000) return json({ fout: 'Ongeldig paspoort.' }, 400);
+      const oud = (await store.get('paspoort/' + l.id, { type: 'json' })) || {};
+      const feedback = Object.fromEntries((oud.reflecties || []).filter(r => r.feedback).map(r => [r.id, r.feedback]));
+      nieuw.reflecties = (Array.isArray(nieuw.reflecties) ? nieuw.reflecties : []).map(r => ({ ...r, feedback: feedback[r.id] || undefined }));
+      nieuw.bijgewerkt = new Date().toISOString();
+      await store.setJSON('paspoort/' + l.id, nieuw);
+      return json({ ok: true, paspoort: nieuw });
+    }
+
     /* ---------- leerkracht ---------- */
+    case 'lk-paspoorten': {
+      if (!isLeerkracht) return nietLk();
+      const { blobs } = await store.list({ prefix: 'paspoort/' });
+      const paspoorten = {};
+      await Promise.all(blobs.map(async b => { paspoorten[b.key.slice(9)] = await store.get(b.key, { type: 'json' }); }));
+      return json({ paspoorten });
+    }
+    case 'lk-feedback': {
+      if (!isLeerkracht) return nietLk();
+      const key = 'paspoort/' + String(body.id || '');
+      const pp = await store.get(key, { type: 'json' }); if (!pp) return json({ fout: 'Geen paspoort gevonden.' }, 404);
+      const r = (pp.reflecties || []).find(x => x.id === body.reflectieId); if (!r) return json({ fout: 'Reflectie niet gevonden.' }, 404);
+      r.feedback = String(body.tekst || '').trim() ? { tekst: String(body.tekst).slice(0, 2000), datum: new Date().toISOString() } : undefined;
+      await store.setJSON(key, pp);
+      return json({ ok: true });
+    }
     case 'overzicht': {
       if (!isLeerkracht) return nietLk();
       const { blobs } = await store.list({ prefix: 'res/' });

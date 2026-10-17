@@ -480,3 +480,36 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .robot { display: inline-grid; place-items: center; position: relative; }
 .robot-pijl { position: absolute; inset: -.55rem; display: grid; place-items: start center; transform: rotate(var(--hoek)); color: var(--oranje); font-size: .85rem; font-weight: 900; }
 .rob-melding { color: var(--fout); font-weight: 800; min-height: 1.4em; margin: .2rem 0; }
+
+/* ---- Paspoort ---- */
+.pp-balk { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: .8rem; } .pp-balk .filters { flex: 1; }
+.filters { display: flex; gap: .4rem; flex-wrap: wrap; }
+.filters button { border: 1.5px solid var(--lijn); background: var(--kaart); border-radius: 99px; padding: .3rem .9rem; font-weight: 700; color: var(--zacht); }
+.filters button.aan { background: var(--oranje); color: #fff; border-color: var(--oranje); }
+.pp-raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: .8rem; margin-bottom: .8rem; }
+.pp-vak { display: grid; gap: .3rem; } .pp-vak b { color: var(--teal); }
+.pp-app { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: .6rem; }
+.pp-appvak { background: var(--papier); border-radius: 12px; padding: .6rem .8rem; display: grid; gap: .25rem; } .pp-appvak small { color: var(--zacht); }
+.pp-meter { height: .6rem; background: #ECE6DA; border-radius: 99px; overflow: hidden; } .pp-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--goed), #7cc79f); border-radius: 99px; }
+.pp-lijst { display: grid; gap: .5rem; }
+.pp-uit { display: grid; grid-template-columns: minmax(180px, 1.4fr) auto auto auto minmax(140px, 1fr); gap: .6rem; align-items: center; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .5rem .7rem; }
+@media (max-width: 900px) { .pp-uit { grid-template-columns: 1fr 1fr; } .pp-naam { grid-column: 1 / -1; } }
+.pp-status { display: flex; gap: .2rem; } .pp-status button { border: 1.5px solid var(--lijn); background: #fff; border-radius: 99px; padding: .15rem .6rem; font-weight: 700; font-size: .85rem; color: var(--zacht); }
+.pp-status button.aan.nog { background: #eee; } .pp-status button.aan.bezig { background: #FFE9D6; border-color: var(--oranje); color: var(--oranje-d); } .pp-status button.aan.klaar { background: var(--goed-l); border-color: var(--goed); color: var(--goed); }
+.pp-med { display: flex; gap: .15rem; } .pp-med button, .pp-gevoel button { border: none; background: none; padding: 0; } .pp-med .med { width: 1.5rem; height: 1.5rem; font-size: .7rem; }
+.pp-gevoel button { font-size: 1.2rem; opacity: .3; } .pp-gevoel button.aan { opacity: 1; transform: scale(1.2); }
+.pp-schaal { display: flex; gap: .3rem; flex-wrap: wrap; } .pp-schaal button { border: 1.5px solid var(--lijn); background: #fff; border-radius: 10px; padding: .3rem .6rem; font-weight: 700; font-size: 1rem; }
+.pp-schaal button.aan { background: var(--oranje); color: #fff; border-color: var(--oranje); }
+.pp-reflecties { display: grid; gap: .7rem; } .pp-reflectie { border: 1.5px solid var(--lijn); border-radius: 12px; padding: .7rem 1rem; } .pp-reflectie p { margin: .25rem 0; } .pp-reflectie p b { color: var(--teal); }
+.pp-r-kop { display: flex; gap: .6rem; align-items: center; } .pp-r-kop b { flex: 1; color: var(--oranje-d); }
+.pp-feedback { background: var(--hint-l); color: #4b2c8a; border-radius: 10px; padding: .5rem .8rem; margin-top: .4rem; }
+.pp-groei { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .8rem; } .pp-jaar { border: 1.5px solid var(--lijn); border-radius: 12px; padding: .7rem 1rem; } .pp-jaar h3 { color: var(--oranje-d); margin-bottom: .4rem; }
+.pp-balk-rij { display: grid; grid-template-columns: 7.5rem 1fr 3rem; gap: .4rem; align-items: center; font-weight: 700; font-size: .9rem; margin-bottom: .3rem; } .pp-balk-rij small { color: var(--zacht); text-align: right; }
+.veld { font: 700 .95rem 'Nunito', sans-serif; border: 2px solid var(--lijn); border-radius: 8px; padding: .35rem .5rem; background: #fff; color: var(--inkt); }
+.pp-kluizen { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: .8rem; margin-bottom: 1rem; align-items: start; }
+.pp-kluis { border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem .8rem; display: grid; gap: .3rem; }
+.pp-kluis-kop { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; } .pp-kluis-kop b { color: var(--teal); } .pp-kluis-kop small { color: var(--zacht); }
+.pp-ond { display: flex; justify-content: space-between; align-items: center; gap: .4rem; font-size: .9rem; font-weight: 700; padding: .15rem 0; border-bottom: 1px dotted var(--lijn); } .pp-ond:last-child { border-bottom: none; }
+.pp-ond .med { width: 1.3rem; height: 1.3rem; font-size: .6rem; }
+.med.eerder { position: relative; opacity: .55; } .med.eerder::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #1b6b3f; font-size: .85rem; font-weight: 900; text-shadow: 0 0 2px #fff; }
+.vink { display: inline-flex; align-items: center; gap: .3rem; font-weight: 700; }

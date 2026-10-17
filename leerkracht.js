@@ -29,8 +29,8 @@ function toonLogin(fout) {
 }
 async function laad() {
   try {
-    const [d, t] = await Promise.all([api('overzicht'), api('lk-toetsen')]);
-    S.data = d; S.toetsData = t; EIGEN = d.inhoud || {};
+    const [d, t, pp] = await Promise.all([api('overzicht'), api('lk-toetsen'), api('lk-paspoorten').catch(() => ({ paspoorten: {} }))]);
+    S.data = d; S.toetsData = t; S.paspoorten = pp.paspoorten || {}; EIGEN = d.inhoud || {};
     sessionStorage.setItem('kk_lk', S.ww);
     document.getElementById('kop-rechts').replaceChildren(
       el('button', { onclick: laad }, '↻ Vernieuwen'),
@@ -104,6 +104,7 @@ function detail(id) {
   const tr = (S.toetsData.toetsen || []).map(t => ({ t, r: S.toetsData.resultaten[t.id]?.[id] })).filter(x => x.r);
   if (tr.length) wrap.append(el('h2', {}, 'Toetsen'), el('div', { class: 'tabelwrap' }, el('table', { class: 'lijst' }, el('tr', {}, ['Toets', 'Status', 'Score', '%'].map(h => el('th', {}, h))),
     tr.map(({ t, r }) => el('tr', {}, el('td', {}, t.titel), el('td', {}, r.ingeleverd ? `ingeleverd ${fmtDatum(r.ingeleverd)}` : 'bezig'), el('td', {}, `${r.score}/${r.max}`), el('td', {}, r.max ? Math.round(100 * r.score / r.max) + '%' : '–'))))));
+  wrap.append(paspoortBlok(l));
   wrap.append(el('h2', {}, 'Logboek'), logboek(id));
   wrap.append(el('div', { class: 'rij-acties geen-print' }, el('button', { class: 'knop tweede', onclick: async () => {
     if (!confirm(`Alle oefenresultaten van ${l.voornaam} ${l.naam} wissen? Dit kan niet ongedaan gemaakt worden.`)) return;
@@ -194,6 +195,15 @@ function beheer() {
     } }, 'Toevoegen aan de lijst')),
     el('h2', {}, 'Aanmeldkaartjes'),
     el('div', { class: 'rij-acties' }, klasKeuze, el('button', { class: 'knop tweede', onclick: () => kaartjes(lijst.filter(l => !klasKeuze.value || (l.klas || '') === klasKeuze.value)) }, '🖨 Kaartjes afdrukken')),
+    el('h2', {}, '🛂 Kangoeroe-paspoorten afdrukken'),
+    el('p', { class: 'stil' }, 'Het voorblad (Dit ben ik) en het groeiblad dienen voor 3 schooljaren. De bladen Mijn medailles, Andere uitdagingen en Reflectie zijn per schooljaar: vink "alleen de jaarbladen" aan om die bij de start van een nieuw schooljaar bij te drukken. Blanco = om met de hand in te vullen. Ingevuld = met wat de leerlingen digitaal invulden en hun resultaten uit de app.'),
+    (() => {
+      const jb = el('input', { type: 'checkbox' });
+      const k = el('select', {}, klassen().map(x => el('option', { value: x }, x || '(geen)')));
+      return el('div', { class: 'rij-acties' }, el('label', { class: 'vink' }, jb, ' alleen de jaarbladen'),
+        el('button', { class: 'knop tweede', onclick: () => drukPaspoort([{}], { jaarbladen: jb.checked }) }, '🖨 Blanco paspoort'), k,
+        el('button', { class: 'knop tweede', onclick: () => drukPaspoort(S.data.leerlingen.filter(l => (l.klas || '') === k.value).map(l => ({ leerling: l, paspoort: S.paspoorten?.[l.id], resultaten: S.data.resultaten[l.id] || [] })), { jaarbladen: jb.checked }) }, '🖨 Ingevulde paspoorten van deze klas'));
+    })(),
     el('h2', { style: 'margin-top:2rem' }, 'Gevarenzone'),
     el('button', { class: 'knop tweede', style: 'color:var(--fout)', onclick: async () => {
       if (!confirm('ALLE oefenresultaten van ALLE leerlingen wissen? Dit kan niet ongedaan gemaakt worden.')) return;
@@ -261,7 +271,9 @@ function inhoudTab() {
   const wrap = el('div', {},
     el('div', { class: 'blok' }, el('h3', {}, '⚙️ Instellingen voor de leerlingen'),
       el('label', {}, el('input', { type: 'checkbox', checked: !!inst.niveausInVolgorde, onchange: async e => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), niveausInVolgorde: e.target.checked }; await bewaarInhoud(msg); } }),
-        ' Niveaus in volgorde vrijspelen (eerst brons, dan zilver …). Uit = leerlingen kiezen zelf op welk niveau ze beginnen.')),
+        ' Niveaus in volgorde vrijspelen (eerst brons, dan zilver …). Uit = leerlingen kiezen zelf op welk niveau ze beginnen.'),
+      el('div', { style: 'margin-top:1rem' }, el('b', {}, '🛂 Andere uitdagingen in het Kangoeroe-paspoort'), el('p', { class: 'stil' }, 'Eén uitdaging per regel. De leerlingen duiden hiervoor zelf hun status, niveau en gevoel aan.'),
+        (() => { const t = el('textarea', { class: 'tekst', rows: 6 }); t.value = paspoortUitdagingen().join('\n'); return [t, el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: async () => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), uitdagingen: t.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean) }; await bewaarInhoud(msg); } }, '💾 Bewaar lijst'))]; })())),
     el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
   for (const [soort, titel, uitleg] of INHOUD_SOORTEN) {
     const eigen = EIGEN[soort] || [];
@@ -506,3 +518,30 @@ function toetsResultaten(toetsId) {
 }
 
 S.ww ? laad() : toonLogin();
+
+
+/* ================= Paspoort (leerkracht) ================= */
+function paspoortBlok(l) {
+  const pp = normPaspoort(S.paspoorten?.[l.id]);
+  const sj = schooljaarVan();
+  const wrap = el('div', { class: 'blok' }, el('div', { class: 'spelkop' }, el('h2', { style: 'margin:0;flex:1' }, '🛂 Kangoeroe-paspoort'),
+    el('button', { class: 'knop tweede klein', onclick: () => drukPaspoort([{ leerling: l, paspoort: pp, resultaten: S.data.resultaten[l.id] || [], jaar: sj }]) }, '🖨 Paspoort afdrukken')));
+  if (!S.paspoorten?.[l.id]) { wrap.append(el('p', { class: 'stil' }, 'Deze leerling heeft het paspoort nog niet ingevuld. Je kunt wel al een paspoort afdrukken met de resultaten uit de app.')); return wrap; }
+  const ikJaren = Object.keys(pp.ditBenIk).sort().reverse().filter(j => DIT_BEN_IK.some(([k]) => pp.ditBenIk[j][k]));
+  if (ikJaren.length) wrap.append(el('h3', {}, 'Dit ben ik'), ...ikJaren.map(j => el('div', {}, el('b', { class: 'stil' }, `Schooljaar ${j}`),
+    el('ul', {}, DIT_BEN_IK.filter(([k]) => pp.ditBenIk[j][k]).map(([k, t]) => el('li', {}, el('b', {}, t + ': '), pp.ditBenIk[j][k]))))));
+  const uit = paspoortUitdagingen().map(n => [n, pp.uitdagingen?.[n]?.[sj]]).filter(([, u]) => u && (u.status || u.niveau || u.notitie));
+  if (uit.length) wrap.append(el('h3', {}, `Andere uitdagingen ${sj}`), el('div', { class: 'tabelwrap' }, el('table', { class: 'lijst' }, el('tr', {}, ['Uitdaging', 'Status', 'Niveau', 'Gevoel', 'Notitie'].map(h => el('th', {}, h))),
+    uit.map(([n, u]) => el('tr', {}, el('td', {}, n), el('td', {}, { nog: 'nog niet', bezig: 'bezig', klaar: '✔ klaar' }[u.status] || ''), el('td', {}, u.niveau ? medaille(u.niveau) : ''), el('td', {}, u.gevoel ? GEVOEL[u.gevoel - 1] : ''), el('td', { style: 'white-space:normal' }, u.notitie || ''))))));
+  const refl = [...(pp.reflecties || [])].sort((a, b) => b.datum.localeCompare(a.datum));
+  if (refl.length) wrap.append(el('h3', {}, 'Reflecties'), ...refl.map(r => {
+    const t = el('textarea', { class: 'tekst', rows: 2, placeholder: 'Schrijf feedback voor de leerling…' }); t.value = r.feedback?.tekst || '';
+    const m = el('span', { class: 'stil' });
+    return el('div', { class: 'pp-reflectie' }, el('div', { class: 'pp-r-kop' }, el('b', {}, `${PERIODES[r.periode]} · ${r.schooljaar}`), el('span', {}, `${r.motivatie ? 'motivatie ' + GEVOEL[r.motivatie - 1] : ''} ${r.uitdaging ? '· uitdaging: ' + ['te makkelijk', 'makkelijk', 'precies goed', 'pittig', 'te moeilijk'][r.uitdaging - 1] : ''}`)),
+      REFLECTIEVRAGEN.filter(([k]) => r[k]).map(([k, q]) => el('p', {}, el('b', {}, q + ' '), r[k])),
+      el('div', { class: 'pp-feedback' }, el('b', {}, '💬 Jouw feedback'), t, el('div', { class: 'knoppenrij' }, el('button', { class: 'knop klein', onclick: async () => {
+        try { await api('lk-feedback', { id: l.id, reflectieId: r.id, tekst: t.value }); r.feedback = t.value.trim() ? { tekst: t.value } : undefined; m.textContent = 'Bewaard ✓ De leerling ziet dit in het paspoort.'; } catch (e) { m.textContent = e.message; }
+      } }, 'Bewaar feedback'), m)));
+  }));
+  return wrap;
+}
