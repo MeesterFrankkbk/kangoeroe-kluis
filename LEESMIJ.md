@@ -1,6 +1,6 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 43 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 44 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
 
 Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 

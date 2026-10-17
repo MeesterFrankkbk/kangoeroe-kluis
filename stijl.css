@@ -513,3 +513,22 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .pp-ond .med { width: 1.3rem; height: 1.3rem; font-size: .6rem; }
 .med.eerder { position: relative; opacity: .55; } .med.eerder::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #1b6b3f; font-size: .85rem; font-weight: 900; text-shadow: 0 0 2px #fff; }
 .vink { display: inline-flex; align-items: center; gap: .3rem; font-weight: 700; }
+/* ---------- letterdroedels ---------- */
+.ld-rij { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+.ld-antw { display: grid; gap: .3rem; flex: 1; min-width: 200px; } .ld-lees { color: var(--hint); font-weight: 800; min-height: 1.1em; }
+.ld-beeld { display: inline-flex; align-items: center; justify-content: center; gap: .35em; font: 700 2.1rem/1 'Fredoka', sans-serif; color: #1F2A2E; background: #fff; border: 2px solid var(--lijn); border-radius: 14px; min-height: 8.5rem; min-width: 10rem; padding: .6rem 1.1rem; }
+.ld-in { position: relative; display: inline-grid; place-items: center; }
+.ld-in .ld-buiten { color: #fff; -webkit-text-stroke: 3px #1F2A2E; paint-order: stroke fill; font-weight: 700; line-height: .95; }
+.ld-in.g1 .ld-buiten { font-size: 5.6rem; } .ld-in.g2 .ld-buiten { font-size: 4.2rem; } .ld-in.g3 .ld-buiten { font-size: 3.2rem; }
+.ld-in .ld-binnen { position: absolute; inset: 0; display: grid; place-items: center; font-size: .95rem; color: var(--oranje-d); } .ld-in .ld-binnen > * { background: #fff; border-radius: 4px; padding: 0 .12em; line-height: 1.1; font-size: inherit; }
+.ld-op { display: inline-flex; flex-direction: column; align-items: center; } .ld-op .ld-klein { font-size: .55em; color: var(--oranje-d); margin-bottom: -.05em; }
+.ld-breuk { display: inline-flex; flex-direction: column; align-items: center; font-size: .85em; } .ld-breuk > span:first-child { border-bottom: 4px solid #1F2A2E; padding: 0 .15em .08em; } .ld-breuk > span:last-child { padding-top: .08em; }
+.ld-na { display: inline-flex; align-items: center; } .ld-na i { font-style: normal; font-size: 1.5em; font-weight: 400; margin: 0 .05em; }
+.ld-om { position: relative; display: inline-block; font-size: .8em; margin: 0 .45em; } .ld-om .ld-midden { position: absolute; inset: 0; display: grid; place-items: center; }
+.ld-om .ld-rond { position: absolute; transform: translate(-50%, -50%); font-size: .45em; color: var(--oranje-d); }
+.ld-om .ld-om { font-size: .7em; } .ld-om .ld-om .ld-rond { color: var(--teal); font-size: .55em; }
+.ld-uit { position: relative; display: inline-block; margin: .4em .9em .1em 0; } .ld-doos { display: inline-block; border: 3px solid #1F2A2E; padding: .15em .3em; font-size: .8em; }
+.ld-eruit { position: absolute; right: -.75em; top: -.55em; font-size: .6em; color: var(--oranje-d); transform: rotate(18deg); background: #fff; padding: 0 .1em; }
+.ld-teken { color: var(--oranje-d); }
+.ld-ster { width: 1.05em; height: 1.05em; }
+.ld-leer { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: .8rem; } .ld-vb { display: flex; gap: .8rem; align-items: center; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem; } .ld-vb p { margin: .15rem 0; } .ld-vb .ld-beeld { min-height: 7rem; min-width: 8.5rem; font-size: 1.7rem; }

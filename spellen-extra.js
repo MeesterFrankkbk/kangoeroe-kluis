@@ -147,6 +147,106 @@ SPELLEN.push({
   }
 });
 
+/* ---------------- Letterdroedels (woorden uitgebeeld met de plaats van letters) ---------------- */
+const LD = (() => {
+  const lc = s => String(s).toLowerCase();
+  const deel = x => (typeof x === 'string' ? LD.t(x) : x);
+  const STER = '<svg class="ld-ster" viewBox="0 0 100 100"><polygon points="50,6 61,38 95,38 67,58 78,92 50,71 22,92 33,58 5,38 39,38" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/></svg>';
+  const GETAL = { 1: 'één', 2: 'twee', 3: 'drie', 4: 'vier', 8: 'acht', 10: 'tien', 11: 'elf' };
+  const LD = {
+    t: s => ({ h: `<span class="ld-t">${s}</span>`, l: lc(s), w: s.length * .72 }),
+    n: g => ({ h: `<span class="ld-t">${g}</span>`, l: GETAL[g], w: String(g).length * .7 }),
+    ster: () => ({ h: STER, l: 'ster', w: 1.1 }),
+    en: () => ({ h: '<span class="ld-teken">+</span>', l: 'en', w: .7 }),
+    is: () => ({ h: '<span class="ld-teken">=</span>', l: 'is', w: .7 }),
+    /* x in y: grote holle letter(s) y met x erin */
+    in: (x, y) => { x = deel(x); const g = y.length === 1 ? 'g1' : y.length <= 3 ? 'g2' : 'g3'; return { h: `<span class="ld-in ${g}"><span class="ld-buiten">${y}</span><span class="ld-binnen"><span>${x.h}</span></span></span>`, l: `${x.l} in ${lc(y)}`, w: y.length * (g === 'g1' ? 2 : g === 'g2' ? 1.5 : 1.15) }; },
+    /* x op y: kleine x staat bovenop y */
+    op: (x, y) => ({ h: `<span class="ld-op"><span class="ld-klein">${x}</span><span>${y}</span></span>`, l: `${lc(x)} op ${lc(y)}`, w: y.length * .72 }),
+    /* x onder y: y boven de streep, x eronder */
+    onder: (x, y) => ({ h: `<span class="ld-breuk"><span>${y}</span><span>${x}</span></span>`, l: `${lc(x)} onder ${lc(y)}`, w: Math.max(x.length, y.length) * .72 }),
+    /* x na y: geschreven als y/x */
+    na: (x, y) => ({ h: `<span class="ld-na">${y}<i>/</i>${x}</span>`, l: `${lc(x)} na ${lc(y)}`, w: (x.length + y.length) * .72 + .6 }),
+    /* x om y: x staat in een kring rond y */
+    om: (x, y) => {
+      y = deel(y); const b = y.w + 2.2, hgt = Math.max(3.4, b * .45), k = Math.max(6, Math.round(b * 2.1));
+      const rond = Array.from({ length: k }, (_, i) => { const a = 2 * Math.PI * i / k - Math.PI / 2; return `<span class="ld-rond" style="left:${50 + 46 * Math.cos(a)}%;top:${50 + 44 * Math.sin(a)}%">${x}</span>`; }).join('');
+      return { h: `<span class="ld-om" style="width:${b}em;height:${hgt}em">${rond}<span class="ld-midden">${y.h}</span></span>`, l: `${lc(x)} om ${y.l}`, w: b };
+    },
+    /* x uit y: y in een doos, x springt eruit */
+    uit: (x, y) => ({ h: `<span class="ld-uit"><span class="ld-doos">${y}</span><span class="ld-eruit">${x}</span></span>`, l: `${lc(x)} uit ${lc(y)}`, w: y.length * .72 + 1.5 }),
+  };
+  return LD;
+})();
+const L_ = LD;
+const LDR = (woord, ...delen) => ({ w: woord, d: delen.map(d => typeof d === 'string' ? LD.t(d) : typeof d === 'number' ? LD.n(d) : d) });
+const LETTERDROEDELS = {
+  1: [LDR('kind', L_.in('K', 'D')), LDR('lint', L_.in('L', 'T')), LDR('vink', L_.in('V', 'K')), LDR('prins', L_.in('PR', 'S')),
+    LDR('kopen', L_.op('K', 'EN')), LDR('hopen', L_.op('H', 'EN')), LDR('bomen', L_.om('B', 'EN')), LDR('zomer', L_.om('Z', 'ER')),
+    LDR('pracht', 'PR', 8), LDR('zacht', 'Z', 8), LDR('steen', 'ST', 1), LDR('teen', 'T', 1), LDR('been', 'B', 1), LDR('sterk', L_.ster(), 'K'),
+    LDR('tent', 'T', L_.en(), 'T'), LDR('denk', 'D', L_.en(), 'K'), LDR('wens', 'W', L_.en(), 'S'), LDR('kist', 'K', L_.is(), 'T'), LDR('mist', 'M', L_.is(), 'T'),
+    LDR('tiener', 10, 'ER'), LDR('driehoek', 3, 'HOEK'), LDR('vierkant', 4, 'KANT')],
+  2: [LDR('dinsdag', L_.in('D', 'S'), 'DAG'), LDR('kinderen', L_.in('K', 'DEREN')), LDR('koper', L_.op('K', 'ER')), LDR('zingen', L_.in('Z', 'G'), 'EN'), LDR('vinger', L_.in('V', 'GER')),
+    LDR('roman', L_.om('R', 'AN')), LDR('komeet', L_.om('K', 'EET')), LDR('tomaat', L_.om('T', 'AAT')), LDR('kanaal', L_.na('KA', 'AL')), LDR('ananas', L_.na('A', 'NAS')),
+    LDR('helft', 'H', 11, 'T'), LDR('eenhoorn', 1, 'HOORN'), LDR('achtbaan', 8, 'BAAN'), LDR('achtste', 8, 'STE'), LDR('venster', 'VEN', L_.ster()), LDR('gisteren', 'GI', L_.ster(), 'EN'),
+    LDR('meester', 'MEE', L_.ster()), LDR('zuster', 'ZU', L_.ster()), LDR('knopen', L_.op('KN', 'EN')), LDR('stomen', L_.om('ST', 'EN')), LDR('trommel', L_.om('TR', 'MEL')),
+    LDR('nachtegaal', 'N', 8, 'EGAAL'), LDR('wachten', 'W', 8, 'EN'), LDR('hengel', 'H', L_.en(), 'GEL'), LDR('zender', 'Z', L_.en(), 'DER'), LDR('donderdag', L_.onder('D', 'DAG')),
+    LDR('sluiten', L_.uit('SL', 'EN')), LDR('fluiten', L_.uit('FL', 'EN')), LDR('lintworm', L_.in('L', 'T'), 'WORM')],
+  3: [LDR('winkel', L_.in('W', 'K'), 'EL'), LDR('prinses', L_.in('PR', 'S'), 'ES'), LDR('spinnen', L_.in('SP', 'N'), 'EN'), LDR('springen', L_.in('SPR', 'G'), 'EN'), LDR('tomaten', L_.om('T', 'AAT'), 'EN'),
+    LDR('banaal', L_.na('BA', 'AL')), LDR('spruitjes', L_.uit('SPR', 'JES')), LDR('kinderwagen', L_.in('K', 'DER'), 'WAGEN'), LDR('wintersport', L_.in('W', 'TER'), 'SPORT'), LDR('zomerkamp', L_.om('Z', 'ER'), 'KAMP'),
+    LDR('steenbok', 'ST', 1, 'BOK'), LDR('tweewieler', 2, 'WIELER'), LDR('driewieler', 3, 'WIELER'), LDR('tienkamp', 10, 'KAMP'), LDR('verwachten', 'VERW', 8, 'EN'),
+    LDR('meesterwerk', 'MEE', L_.ster(), 'WERK'), LDR('schoppen', L_.op('SCH', 'PEN')), LDR('lachten', 'L', 8, 'EN'), LDR('achtentachtig', 8, L_.en(), 8, 'TIG'), LDR('winkelwagen', L_.in('W', 'K'), 'EL', 'WAGEN')],
+  4: [LDR('komkommer', L_.om('K', L_.om('K', 'MER'))), LDR('sinterklaas', L_.in('S', 'TER'), 'KLAAS'), LDR('winterster', L_.in('W', 'TER'), L_.ster()), LDR('dinosaurus', L_.in('D', 'O'), 'SAURUS'),
+    LDR('slingeren', L_.in('SL', 'GER'), 'EN'), LDR('bewonderen', L_.onder('BEW', 'EN')), LDR('verwonderen', L_.onder('VERW', 'EN')), LDR('springtouw', L_.in('SPR', 'G'), 'TOUW'),
+    LDR('vingerafdruk', L_.in('V', 'GER'), 'AFDRUK'), LDR('tweelingzus', 2, L_.in('L', 'G'), 'ZUS'), LDR('stomerij', L_.om('ST', 'ER'), 'IJ'), LDR('spinnenweb', L_.in('SP', 'N'), 'EN', 'WEB'),
+    LDR('tomatensoep', L_.om('T', 'AAT'), 'EN', 'SOEP'), LDR('donderdagavond', L_.onder('D', 'DAG'), 'AVOND')],
+  5: [LDR('prinsengracht', L_.in('PR', 'S'), L_.en(), 'GR', 8), LDR('sterrenwacht', L_.ster(), 'R', L_.en(), 'W', 8), LDR('sterrenkind', L_.ster(), 'R', L_.en(), L_.in('K', 'D')),
+    LDR('verwachtingen', 'VERW', L_.in(L_.n(8), 'GEN')), LDR('komkommersoep', L_.om('K', L_.om('K', 'MER')), 'SOEP'), LDR('eendrachtig', 1, 'D', 'R', 8, 'IG'),
+    LDR('tweelingbroer', 2, L_.in('L', 'G'), 'BROER'), LDR('kinderboerderij', L_.in('K', 'DER'), 'BOERDERIJ'), LDR('wintersterren', L_.in('W', 'TER'), L_.ster(), 'R', 'EN'),
+    LDR('dinsdagavond', L_.in('D', 'S'), 'DAG', 'AVOND'), LDR('prinsenhof', L_.in('PR', 'S'), L_.en(), 'HOF')],
+};
+const ldBeeld = d => U.el('div', { class: 'ld-beeld', html: d.d.map(x => x.h).join('') });
+const ldLees = d => d.d.map(x => x.l).join(' · ');
+SPELLEN.push({
+  id: 'letterdroedels', naam: 'Letterdroedels', vak: 'taal', icoon: '🔠', kort: 'Woorden uitgebeeld met letters: K in D = kind.',
+  uitleg: 'Een letterdroedel beeldt een woord uit met letters, cijfers en tekens. Kijk goed WAAR de letters staan: in, op, onder, om, na, uit … Lees alles hardop en je hoort het woord. Bij "Eerst leren" zie je alle trucjes.',
+  leer(doos) {
+    const vb = [
+      ['in', LDR('kind', L_.in('K', 'D')), 'Kleine letters IN een grote letter.'],
+      ['op', LDR('kopen', L_.op('K', 'EN')), 'Letters bovenOP andere letters.'],
+      ['onder', LDR('donderdag', L_.onder('D', 'DAG')), 'Letters ONDER de streep.'],
+      ['om', LDR('bomen', L_.om('B', 'EN')), 'Letters in een kring OM andere letters.'],
+      ['na', LDR('kanaal', L_.na('KA', 'AL')), 'AL/KA: KA komt NA AL.'],
+      ['uit', LDR('sluiten', L_.uit('SL', 'EN')), 'Letters springen UIT de doos.'],
+      ['cijfers', LDR('wachten', 'W', 8, 'EN'), 'Een cijfer lees je als woord: 8 = acht, 1 = één.'],
+      ['tekens', LDR('meester', 'MEE', L_.ster()), '★ = ster, + = en, = is.'],
+    ];
+    doos.append(U.el('p', { class: 'opdracht' }, 'Zo lees je letterdroedels. Lees elk stukje hardop en plak alles aan elkaar.'),
+      U.el('div', { class: 'ld-leer' }, vb.map(([k, d, t]) => U.el('div', { class: 'ld-vb' }, ldBeeld(d), U.el('div', {}, U.el('b', {}, k), U.el('p', {}, t), U.el('p', { class: 'stil' }, `${ldLees(d)} → `, U.el('b', {}, d.w)))))),
+      U.el('p', { class: 'stil' }, 'Zelf maken? Probeer er een paar op papier en laat ze oplossen door iemand uit je groep.'));
+  },
+  maak(n, doos) {
+    const pool = U.shuffle(LETTERDROEDELS[n]).slice(0, n === 5 ? 3 : 4);
+    const rijen = pool.map(d => {
+      const antw = U.tekst('tekst', 'Welk woord?');
+      const lees = U.el('small', { class: 'ld-lees' }, '');
+      const el = U.el('div', { class: 'trij ld-rij' }, ldBeeld(d), U.el('div', { class: 'ld-antw' }, antw, lees));
+      antw.addEventListener('input', () => { U.mark(antw, ''); el.classList.remove('goed', 'fout'); });
+      let hints = 0;
+      const ok = () => U.norm(antw.value) === U.norm(d.w);
+      return {
+        el,
+        status() { if (!antw.value.trim()) return null; const r = ok(); if (r) lees.textContent = `${ldLees(d)} → ${d.w}`; return r; },
+        markeer() { if (antw.value.trim() && !antw.readOnly) U.mark(antw, ok() ? 'goed' : 'fout'); },
+        hint() { hints++; if (hints === 1) { lees.textContent = ldLees(d); return; } antw.value = d.w; antw.readOnly = true; U.mark(antw, 'hint'); lees.textContent = `${ldLees(d)} → ${d.w}`; },
+      };
+    });
+    doos.append(U.el('div', { class: 'trijen' }, rijen.map(r => r.el)));
+    const spel = rijenSpel(rijen);
+    return { ...spel, hint() { const r = U.pick(rijen.filter(r => r.status() !== true)); if (!r) return 'Alles is juist!'; r.hint(); r.el.classList.remove('fout'); return 'Een hulpje: onder een droedel staat nu hoe je hem leest (of het antwoord).'; } };
+  }
+});
+
 /* ---------------- Codekraker ---------------- */
 const MORSE = { A: '·−', B: '−···', C: '−·−·', D: '−··', E: '·', F: '··−·', G: '−−·', H: '····', I: '··', J: '·−−−', K: '−·−', L: '·−··', M: '−−', N: '−·', O: '−−−', P: '·−−·', Q: '−−·−', R: '·−·', S: '···', T: '−', U: '··−', V: '···−', W: '·−−', X: '−··−', Y: '−·−−', Z: '−−··' };
 function varkenshok(l) {
