@@ -400,7 +400,7 @@ SPELLEN.push({
       const lijst = progs[naam];
       return lijst.length ? lijst.map((t, k) => {
         if (t.t === 'E') diepte--;
-        const el = U.el('span', { class: 'blok b' + t.t, style: `margin-left:${Math.max(0, diepte) * 1.2}rem`, title: 'Klik om weg te halen', onclick: e => { e.stopPropagation(); if (bezig) return; lijst.splice(k, 1); tekenProg(); } },
+        const el = U.el('span', { class: 'rblok b' + t.t, style: `margin-left:${Math.max(0, diepte) * 1.2}rem`, title: 'Klik om weg te halen', onclick: e => { e.stopPropagation(); if (bezig) return; lijst.splice(k, 1); tekenProg(); } },
           { F: '▲ vooruit', L: '⟲ links', R: '⟳ rechts', H: '🔁 herhaal', E: '⏹ einde herhaal', A: '🅰 functie A' }[t.t],
           t.t === 'H' ? U.el('button', { class: 'aantal', onclick: e => { e.stopPropagation(); t.n = t.n >= 9 ? 2 : t.n + 1; tekenProg(); } }, `×${t.n}`) : null);
         if (t.t === 'H') diepte++;
@@ -441,9 +441,9 @@ SPELLEN.push({
     let knopA = null;
     tekenVeld();
     const palet = U.el('div', {},
-      U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'blok bF', onclick: () => voeg({ t: 'F' }) }, '▲ vooruit'), U.el('button', { class: 'blok bL', onclick: () => voeg({ t: 'L' }) }, '⟲ links'), U.el('button', { class: 'blok bR', onclick: () => voeg({ t: 'R' }) }, '⟳ rechts')),
-      n >= 2 ? U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'blok bH', onclick: () => voeg({ t: 'H', n: 2 }) }, '🔁 herhaal'), U.el('button', { class: 'blok bE', onclick: () => voeg({ t: 'E' }) }, '⏹ einde herhaal'),
-        P.functies ? (knopA = U.el('button', { class: 'blok bA', onclick: () => voeg({ t: 'A' }) }, '🅰 functie A')) : null) : null,
+      U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'rblok bF', onclick: () => voeg({ t: 'F' }) }, '▲ vooruit'), U.el('button', { class: 'rblok bL', onclick: () => voeg({ t: 'L' }) }, '⟲ links'), U.el('button', { class: 'rblok bR', onclick: () => voeg({ t: 'R' }) }, '⟳ rechts')),
+      n >= 2 ? U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'rblok bH', onclick: () => voeg({ t: 'H', n: 2 }) }, '🔁 herhaal'), U.el('button', { class: 'rblok bE', onclick: () => voeg({ t: 'E' }) }, '⏹ einde herhaal'),
+        P.functies ? (knopA = U.el('button', { class: 'rblok bA', onclick: () => voeg({ t: 'A' }) }, '🅰 functie A')) : null) : null,
       U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop', onclick: speel }, '▶ Start de robot'), U.el('button', { class: 'knop tweede klein', onclick: () => { if (!bezig) { tekenVeld(); melding.textContent = ''; } } }, '↺ Robot terug'), U.el('button', { class: 'knop tweede klein', onclick: () => { if (!bezig) { progs[actief] = []; tekenProg(); tekenVeld(); } } }, '🗑 Wis')));
     tekenProg();
     doos.append(U.el('div', { class: 'robot-wrap' }, rooster, U.el('div', {}, progBox, status, melding, palet)));

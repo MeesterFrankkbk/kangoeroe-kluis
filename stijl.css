@@ -434,9 +434,9 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .rob-cel.spoor { background: #FFE0B8; }
 .robot { position: relative; font-size: 1.6rem; } .robot small { position: absolute; right: -.6rem; top: -.5rem; font-size: .8rem; color: var(--oranje); }
 .programma { min-height: 3rem; background: var(--papier); border-radius: 10px; padding: .5rem; display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
-.blok { border: none; border-radius: 8px; padding: .3rem .7rem; font-weight: 800; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; }
+.rblok { border: none; border-radius: 8px; padding: .3rem .7rem; font-weight: 800; color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: .4rem; }
 .bF { background: #2E8B57; } .bL, .bR { background: #3B6FB6; } .bH { background: var(--oranje); } .bE { background: #B4612A; }
-.blok .aantal { border: none; background: rgba(255,255,255,.3); color: #fff; border-radius: 6px; font-weight: 800; padding: 0 .4rem; }
+.rblok .aantal { border: none; background: rgba(255,255,255,.3); color: #fff; border-radius: 6px; font-weight: 800; padding: 0 .4rem; }
 .nok { color: var(--fout); font-weight: 800; }
 
 /* ---- Doolhof ---- */
@@ -553,3 +553,18 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .sr-kop-rij.goed { border-color: var(--goed); background: var(--goed-l); } .sr-kop-rij.fout { border-color: var(--fout); } .sr-kop-rij.hint { border-color: var(--hint); }
 .sr-leer { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: .8rem; } .sr-vb { display: flex; gap: .8rem; align-items: center; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .6rem; } .sr-vb p { margin: 0; }
 .sr-delen { display: flex; gap: .6rem; align-items: flex-start; } .sr-deel { display: flex; flex-direction: column; align-items: center; }
+/* ---------- wiskunde-uitdagingen ---------- */
+.uit-lijst { display: grid; gap: 1rem; }
+.uit-vraag { border: 2px solid var(--lijn); border-radius: 14px; padding: .8rem 1rem; background: #fff; display: grid; gap: .6rem; }
+.uit-vraag.goed { border-color: var(--goed); background: #F3FBF6; } .uit-vraag.fout { border-color: var(--fout); }
+.uit-kop { display: flex; justify-content: space-between; align-items: center; } .uit-kop b { color: var(--teal); font-size: 1.1rem; }
+.uit-beeld { max-width: 100%; height: auto; justify-self: start; }
+.uit-letters { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.uit-letter { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 2px solid var(--lijn); background: #fff; font: 700 1.15rem 'Fredoka', sans-serif; color: var(--teal); cursor: pointer; }
+.uit-letter:hover { border-color: var(--oranje); } .uit-letter.gekozen { background: var(--oranje); border-color: var(--oranje); color: #fff; }
+.uit-tips p { margin: .3rem 0; background: var(--hint-l); color: #4b2c8a; border-radius: 10px; padding: .45rem .7rem; }
+.uit-stappen li { margin: .3rem 0; }
+.uit-bewerk { display: grid; gap: .6rem; margin-top: .6rem; }
+.uit-b-rij { display: grid; grid-template-columns: 2rem minmax(160px, 320px) 1fr auto; gap: .7rem; align-items: start; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .5rem; }
+.uit-b-rij img { width: 100%; border: 1px solid var(--lijn); border-radius: 6px; } .uit-b-velden { display: grid; gap: .3rem; } .uit-b-knoppen { display: grid; gap: .2rem; }
+@media (max-width: 800px) { .uit-b-rij { grid-template-columns: 2rem 1fr; } .uit-b-velden, .uit-b-knoppen { grid-column: 1 / -1; } }

@@ -189,6 +189,24 @@ export default async (req) => {
       else { const { blobs } = await store.list({ prefix: 'res/' }); await Promise.all(blobs.map(b => store.delete(b.key))); }
       return json({ ok: true });
     }
+    /* ---------- prenten voor eigen wiskunde-uitdagingen ---------- */
+    case 'beeld': {
+      const id = new URL(req.url).searchParams.get('id') || '';
+      if (!/^[a-z0-9]{6,40}$/.test(id)) return new Response('Niet gevonden', { status: 404 });
+      const r = await store.getWithMetadata('beeld/' + id, { type: 'arrayBuffer' });
+      if (!r) return new Response('Niet gevonden', { status: 404 });
+      return new Response(r.data, { headers: { 'content-type': r.metadata?.type || 'image/png', 'cache-control': 'public, max-age=31536000, immutable' } });
+    }
+    case 'lk-beeld': {
+      if (!isLeerkracht) return nietLk();
+      const m = /^data:(image\/(png|jpeg|gif|webp));base64,(.+)$/.exec(String(body.data || ''));
+      if (!m) return json({ fout: 'Dit is geen prent (png, jpg, gif of webp).' }, 400);
+      const buf = Buffer.from(m[3], 'base64');
+      if (buf.length > 2_500_000) return json({ fout: 'Deze prent is te groot (max. 2,5 MB).' }, 413);
+      const id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      await store.set('beeld/' + id, buf, { metadata: { type: m[1] } });
+      return json({ ok: true, id });
+    }
     case 'bewaar-inhoud': {
       if (!isLeerkracht) return nietLk();
       const inh = typeof body.inhoud === 'object' && body.inhoud ? body.inhoud : {};

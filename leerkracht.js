@@ -223,7 +223,8 @@ function kaartjes(lijst) {
 /* ================= Eigen inhoud ================= */
 const INHOUD_SOORTEN = [
   ['woorden', 'Nederlandse woordenlijsten', 'Voor Filippine, Letterhussel, Woordzoeker en Kruiswoordraadsel.'],
-  ['zinnen', 'Nederlandse zinnen', 'Voor Muurstenen, Gevallen letters en Geheimschrift.'],
+  ['zinnen', 'Nederlandse zinnen', 'Voor Muurstenen, Gevallen letters, Geheimschrift, Codekraker en de Spreekwoordrebus.'],
+  ['uitdagingen', 'Wiskunde-uitdagingen', 'Reeksen meerkeuzevragen (A–E) als prent: upload de prenten, vul de sleutel in en schrijf eventueel hulp (tips) per vraag.'],
   ['fr-woorden', 'Frans: woordenschat', 'Voor de oefening Woordenschat (Frans) en voor toetsen.'],
   ['fr-ww', 'Frans: werkwoorden', 'Voor de oefening Werkwoorden (Frans) en voor toetsen.'],
   ['fr-teksten', 'Frans: teksten', 'Voor Lezen en luisteren (Frans) en voor toetsen.'],
@@ -257,7 +258,7 @@ function vanTekst(soort, tekst) {
 }
 const vragenNaarTekst = vr => (vr || []).map(v => [v.v, ...v.opties.map((o, k) => (k === v.juist ? '*' : '') + o)].join(' | ')).join('\n');
 const vragenVanTekst = t => t.split(/\r?\n/).map(r => r.trim()).filter(Boolean).map(r => { const d = r.split('|').map(s => s.trim()); const opties = d.slice(1).map(o => o.replace(/^\*/, '').trim()); return { v: d[0], opties, juist: d.slice(1).findIndex(o => o.startsWith('*')) }; }).filter(v => v.opties.length >= 2 && v.juist >= 0);
-const aantalVan = (soort, b) => soort === 'toneel' ? `${new Set(leesToneel(b.tekst).flatMap(r => r.rollen || [])).size} rollen` : soort.endsWith('teksten') ? `${b.vragen?.length || 0} vragen` : soort === 'zinnen' ? `${b.zinnen?.length || 0} zinnen` : soort.endsWith('-ww') ? `${b.ww?.length || 0} werkwoorden` : `${b.woorden?.length || 0} woorden`;
+const aantalVan = (soort, b) => soort === 'uitdagingen' ? `${b.vragen?.length || 0} vragen` : soort === 'toneel' ? `${new Set(leesToneel(b.tekst).flatMap(r => r.rollen || [])).size} rollen` : soort.endsWith('teksten') ? `${b.vragen?.length || 0} vragen` : soort === 'zinnen' ? `${b.zinnen?.length || 0} zinnen` : soort.endsWith('-ww') ? `${b.ww?.length || 0} werkwoorden` : `${b.woorden?.length || 0} woorden`;
 
 async function bewaarInhoud(msgEl) {
   try { await api('bewaar-inhoud', { inhoud: EIGEN }); S.data.inhoud = EIGEN; msgEl?.replaceChildren(melding('goed', 'Bewaard. De leerlingen zien dit vanaf hun volgende aanmelding.')); return true; }
@@ -285,7 +286,7 @@ function inhoudTab() {
         el('details', {}, el('summary', { class: 'stil' }, `Ingebouwd (${INGEBOUWD[soort].length})`),
           el('div', { class: 'sets' }, INGEBOUWD[soort].filter(b => b.id !== 'alles').map(b => el('div', { class: 'set' }, el('span', { style: 'flex:1' }, b.naam || b.titel), el('span', { class: 'stil' }, aantalVan(soort, b)),
             el('button', { class: 'klein-knop', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren')))))),
-      el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : soort === 'toneel' ? { titel: '', tekst: '' } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
+      el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : soort === 'toneel' ? { titel: '', tekst: '' } : soort === 'uitdagingen' ? { naam: '', vragen: [] } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
   }
   wrap.append(el('div', { class: 'blok' }, el('h3', {}, 'Reservekopie'), el('p', { class: 'stil' }, 'Bewaar al je eigen inhoud in één bestand, of zet een reservekopie terug.'),
     el('div', { class: 'rij-acties' },
@@ -302,7 +303,45 @@ function inhoudEditor({ soort, b, index }) {
   const naam = el('input', { class: 'veld', value: (isTekst || isToneel ? b.titel : b.naam) || '', placeholder: isTekst || isToneel ? 'Titel' : 'Naam van de lijst (bv. Ridders – les 3)' });
   const form = el('div', { class: 'form' }, el('label', {}, isTekst || isToneel ? 'Titel' : 'Naam', naam));
   let lees;
-  if (isToneel) {
+  if (soort === 'uitdagingen') {
+    const vragen = (b.vragen || []).map(v => ({ ...v, hulp: [...(v.hulp || [])] }));
+    const bronV = el('input', { class: 'veld', value: b.bron || '', placeholder: 'bv. Wiskunde Kangoeroe 2010 (mag leeg)' });
+    const linkV = el('input', { class: 'veld', value: b.link || '', placeholder: 'https://… (mag leeg)' });
+    const lijstEl = el('div', { class: 'uit-bewerk' }), status = el('div');
+    const sleutel = el('input', { class: 'veld', placeholder: 'bv. BDDDADCC EADEDCDB …', style: 'font-family:monospace' });
+    const tekenLijst = () => lijstEl.replaceChildren(...vragen.map((v, k) => el('div', { class: 'uit-b-rij' },
+      el('b', {}, k + 1), (() => { const i = el('img', { alt: '' }); zetBeeld(i, v.beeld); return i; })(),
+      el('div', { class: 'uit-b-velden' },
+        el('label', {}, 'Juist antwoord ', el('select', { onchange: e => v.juist = e.target.value }, ['', ...'ABCDE'].map(l => el('option', { value: l, selected: v.juist === l }, l || '…')))),
+        el('label', {}, 'Hulp: één tip per regel (van een klein duwtje naar een grotere hulp)', el('textarea', { class: 'tekst', rows: 3, oninput: e => v.hulp = e.target.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean) }, (v.hulp || []).join('\n')))),
+      el('div', { class: 'uit-b-knoppen' },
+        el('button', { class: 'klein-knop', disabled: k === 0, onclick: () => { [vragen[k - 1], vragen[k]] = [vragen[k], vragen[k - 1]]; tekenLijst(); } }, '↑'),
+        el('button', { class: 'klein-knop', disabled: k === vragen.length - 1, onclick: () => { [vragen[k + 1], vragen[k]] = [vragen[k], vragen[k + 1]]; tekenLijst(); } }, '↓'),
+        el('button', { class: 'klein-knop', onclick: () => { if (confirm(`Vraag ${k + 1} verwijderen?`)) { vragen.splice(k, 1); tekenLijst(); } } }, '✕')))));
+    const verklein = file => new Promise((ok, nok) => {
+      const img = new Image(); img.onload = () => {
+        const sch = Math.min(1, 1000 / img.width), c = document.createElement('canvas'); c.width = Math.round(img.width * sch); c.height = Math.round(img.height * sch);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        let d = c.toDataURL('image/png'); if (d.length > 900000) d = c.toDataURL('image/jpeg', .88); URL.revokeObjectURL(img.src); ok(d);
+      }; img.onerror = () => nok(new Error(`${file.name} is geen prent.`)); img.src = URL.createObjectURL(file);
+    });
+    const upload = el('input', { type: 'file', accept: 'image/*', multiple: true, style: 'display:none', onchange: async e => {
+      const files = [...e.target.files].sort((a, c) => a.name.localeCompare(c.name, 'nl', { numeric: true }));
+      for (const [k, f] of files.entries()) {
+        status.replaceChildren(melding('info', `Prent ${k + 1} van ${files.length} uploaden: ${f.name}`));
+        try { const r = await api('lk-beeld', { data: await verklein(f) }); vragen.push({ beeld: r.id, juist: '', hulp: [] }); tekenLijst(); }
+        catch (err) { status.replaceChildren(melding('fout', `${f.name}: ${err.message}`)); return; }
+      }
+      status.replaceChildren(melding('goed', `${files.length} prent(en) toegevoegd. Vul nu de sleutel in.`)); e.target.value = '';
+    } });
+    form.append(el('label', {}, 'Bron (wordt getoond bij de reeks)', bronV), el('label', {}, 'Link naar de reeks op jullie site', linkV),
+      el('div', {}, el('b', {}, 'Vragen'), el('p', { class: 'stil' }, 'Upload één prent per vraag (meerdere tegelijk mag). Ze worden op bestandsnaam gesorteerd, bv. Opgave 0901, 0902 …'),
+        el('label', { class: 'knop tweede klein' }, '📷 Prenten toevoegen', upload), status),
+      el('label', {}, 'Sleutel in één keer invullen (letters A–E in volgorde; spaties mogen)', el('div', { class: 'rij-acties' }, sleutel, el('button', { class: 'knop tweede klein', type: 'button', onclick: () => { const l = sleutel.value.toUpperCase().replace(/[^A-E]/g, ''); [...l].forEach((x, k) => { if (vragen[k]) vragen[k].juist = x; }); tekenLijst(); status.replaceChildren(melding(l.length === vragen.length ? 'goed' : 'info', `${l.length} letters ingevuld voor ${vragen.length} vragen.`)); } }, 'Invullen'))),
+      lijstEl);
+    tekenLijst();
+    lees = () => ({ ...b, naam: naam.value.trim(), bron: bronV.value.trim(), link: linkV.value.trim(), vragen });
+  } else if (isToneel) {
     const tekst = el('textarea', { class: 'tekst', placeholder: '(De meester zit aan zijn tafel.)\nMeester: Goedemorgen!\nSam: Goedemorgen, meester.' }, b.tekst || '');
     form.append(el('label', {}, 'Tekst: één beurt per regel, zo → Naam: tekst. Regie tussen haakjes. Twee spelers samen: Lotte & Daan: …', tekst));
     lees = () => ({ ...b, titel: naam.value.trim(), tekst: tekst.value.trim() });
@@ -323,7 +362,11 @@ function inhoudEditor({ soort, b, index }) {
   const bewaar = async () => {
     const nieuw = lees();
     if (!(nieuw.naam || nieuw.titel)) { msg.replaceChildren(melding('fout', 'Geef een naam of titel.')); return; }
-    const n = soort.endsWith('teksten') || soort === 'toneel' ? (soort === 'toneel' ? leesToneel(nieuw.tekst).filter(r => r.rol).length : nieuw.tekst.length) : (nieuw.woorden || nieuw.zinnen || nieuw.ww || []).length;
+    if (soort === 'uitdagingen') {
+      if (!nieuw.vragen.length) { msg.replaceChildren(melding('fout', 'Voeg eerst prenten toe.')); return; }
+      const leeg = nieuw.vragen.findIndex(v => !v.juist); if (leeg >= 0) { msg.replaceChildren(melding('fout', `Vraag ${leeg + 1} heeft nog geen juist antwoord.`)); return; }
+    }
+    const n = soort === 'uitdagingen' ? nieuw.vragen.length : soort.endsWith('teksten') || soort === 'toneel' ? (soort === 'toneel' ? leesToneel(nieuw.tekst).filter(r => r.rol).length : nieuw.tekst.length) : (nieuw.woorden || nieuw.zinnen || nieuw.ww || []).length;
     if (!n) { msg.replaceChildren(melding('fout', 'Er staat nog niets (bruikbaars) in. Kijk het formaat na.')); return; }
     if (soort.endsWith('-woorden') && nieuw.woorden.length < 4) { msg.replaceChildren(melding('fout', 'Zet minstens 4 woorden in de lijst.')); return; }
     EIGEN[soort] = EIGEN[soort] || [];

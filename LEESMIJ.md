@@ -1,6 +1,6 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 45 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 46 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
 
 Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 
@@ -48,6 +48,14 @@ Het paspoort volgt een leerling 3 schooljaren lang:
 
 Leerlingen vullen dit in via het tabblad **🛂 Mijn paspoort**. Jij ziet het paspoort onderaan bij elke leerling in het overzicht en schrijft daar feedback bij de reflecties.
 Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
+
+## Wiskunde-uitdagingen
+Bij **Rekenen → Wiskunde-uitdagingen** maken de leerlingen meerkeuzevragen (A–E). Elke vraag is een prent, met per vraag hulp in stapjes.
+- Brons, zilver en goud: telkens een derde van de reeks.
+- Platinum: 8 vragen door elkaar.
+- Diamant: de hele reeks, zonder hulp.
+
+Een nieuwe reeks voeg je zelf toe bij **Eigen inhoud → Wiskunde-uitdagingen → + Nieuw**. Upload de prenten (meerdere tegelijk), vul de sleutel in (bv. `BDDDADCC…`) en schrijf eventueel tips per vraag. Wil je een ingebouwde reeks aanpassen? Kies dan *Kopiëren*.
 
 ## Goed om te weten
 - Een leerling die van klas verandert, pas je aan in *Leerlingen & codes*. De resultaten blijven bij die leerling, ook over meerdere schooljaren.

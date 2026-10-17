@@ -119,6 +119,7 @@ const BRONSOORTEN = {
   'en-ww': { label: 'Werkwoorden', vak: 'engels', taal: 'en' },
   'fr-teksten': { label: 'Tekst', vak: 'frans', taal: 'fr' },
   'en-teksten': { label: 'Tekst', vak: 'engels', taal: 'en' },
+  uitdagingen: { label: 'Reeks', vak: 'rekenen' },
 };
 const INGEBOUWD = Object.fromEntries(Object.keys(BRONSOORTEN).map(k => [k, []]));
 let EIGEN = {};
