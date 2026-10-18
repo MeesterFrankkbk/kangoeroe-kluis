@@ -174,7 +174,38 @@ function toonHome() {
       el('div', { class: 'pips' }, [1, 2, 3, 4, 5].map(n => el('span', { class: `pip${n <= best ? ' m' + n : ''}`, title: NIVEAUS[n] }))));
   }));
   const med = spellen.reduce((a, s) => a + besteNiveau(s), 0);
-  toon(el('div', { class: 'home-kop' }, el('h1', {}, 'Kies een kluis'), el('div', { class: 'stil' }, `${VAKKEN[S.vak].naam}: ${med} van ${spellen.length * 5} medailles. ${inVolgorde() ? 'Haal brons → zilver → goud → platinum → diamant.' : 'Kies zelf op welk niveau je begint!'}`)), tabs, raster);
+  toon(weekBanner(), el('div', { class: 'home-kop' }, el('h1', {}, 'Kies een kluis'), el('div', { class: 'stil' }, `${VAKKEN[S.vak].naam}: ${med} van ${spellen.length * 5} medailles. ${inVolgorde() ? 'Haal brons → zilver → goud → platinum → diamant.' : 'Kies zelf op welk niveau je begint!'}`)), tabs, raster);
+}
+
+/* ---------- uitdaging van de week (automatisch gekozen) ---------- */
+function isoWeek(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const dag = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dag); const jan1 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { jaar: t.getUTCFullYear(), week: Math.ceil(((t - jan1) / 864e5 + 1) / 7) };
+}
+function weekMaandag(d = new Date()) { const m = new Date(d); m.setHours(0, 0, 0, 0); m.setDate(m.getDate() - ((m.getDay() + 6) % 7)); return m; }
+function uitdagingVanDeWeek(d = new Date()) {
+  const { jaar, week } = isoWeek(d);
+  const kandidaten = SPELLEN.filter(s => s.id !== 'raadsels' && s.vak !== 'toneel' && VAKKEN[s.vak]).sort((a, b) => a.id.localeCompare(b.id));
+  let h = (jaar * 53 + week) >>> 0; /* vaste 'toevallige' keuze per week (mulberry32) */
+  const rnd = () => { h = (h + 0x6D2B79F5) >>> 0; let t = Math.imul(h ^ (h >>> 15), 1 | h); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  /* elke week een ander vak dan vorige week: draai door de vakken */
+  const vakken = [...new Set(kandidaten.map(s => s.vak))];
+  const vak = vakken[(jaar * 53 + week) % vakken.length];
+  const uitVak = kandidaten.filter(s => s.vak === vak);
+  const spel = uitVak[Math.floor(rnd() * uitVak.length)];
+  const niveau = [2, 3, 3, 4][Math.floor(rnd() * 4)];
+  return { spel, niveau, week };
+}
+function weekGedaan(u) { const m = weekMaandag().getTime(); return S.resultaten.some(r => r.spel === u.spel.id && r.juist && r.niveau >= u.niveau && Date.parse(r.datum) >= m); }
+function weekBanner() {
+  const u = uitdagingVanDeWeek(); if (!u.spel) return null;
+  const klaar = weekGedaan(u);
+  const start = () => { const soort = u.spel.bron, lijst = soort ? bronnen(soort) : []; const bron = soort ? (lijst.find(b => b.id === u.spel.standaardBron) || lijst.find(b => !b.eigen) || lijst[0]) : null; toonSpel(u.spel, u.niveau, bron); };
+  return el('div', { class: 'week' + (klaar ? ' gedaan' : '') }, el('span', { class: 'ico' }, klaar ? '✅' : '🏆'),
+    el('div', { class: 'week-tekst' }, el('b', {}, `Uitdaging van week ${u.week}: `), `${u.spel.icoon} ${u.spel.naam} (${VAKKEN[u.spel.vak].naam}) op niveau `, medaille(u.niveau), ` ${NIVEAUS[u.niveau]}`,
+      el('small', {}, klaar ? 'Gelukt deze week! Volgende maandag wacht er een nieuwe uitdaging.' : 'Elke maandag kiest de kluis een nieuwe uitdaging. Lukt het jou deze week?')),
+    el('button', { class: 'knop' + (klaar ? ' tweede' : ''), onclick: start }, klaar ? 'Nog eens' : 'Doe mee'));
 }
 
 /* ---------- startscherm van een spel ---------- */
@@ -193,7 +224,7 @@ function toonStart(spel) {
         return el('button', { class: `niveauknop n${n}${best >= n ? ' gehaald' : ''}`, disabled: !open, onclick: () => toonSpel(spel, n, bron) },
           medaille(n, 'groot' + (open ? '' : ' slot')), el('span', {}, NIVEAUS[n]), el('small', {}, best >= n ? 'gehaald' : open ? 'speel' : '🔒'));
       })),
-      spel.leer ? el('div', { class: 'knoppenrij', style: 'justify-content:center' }, el('button', { class: 'knop tweede', onclick: () => toonLeer(spel, bron) }, '📖 Eerst leren / bekijken')) : null);
+      spel.leer ? el('div', { class: 'knoppenrij', style: 'justify-content:center' }, el('button', { class: 'knop tweede', onclick: () => toonLeer(spel, bron) }, spel.leerKnop || '📖 Eerst leren / bekijken')) : null);
   };
   const keuze = soort && lijst.length ? el('label', { class: 'bronkeuze' }, el('span', {}, BRONSOORTEN[soort].label + ':'),
     el('select', { onchange: e => { bron = lijst.find(b => b.id === e.target.value); opslag.set('kk_bron_' + spel.id, bron.id); teken(); } },
@@ -239,7 +270,8 @@ function toonSpel(spel, niveau, bron) {
     fb.className = 'feedback goed'; fb.textContent = 'Juist!';
     kop(); toonSucces(spel, niveau, bron, item);
   };
-  const ctx = { bron, taal: spel.taal, klaar: () => setTimeout(gelukt, 250) };
+  const mislukt = msg => { if (klaar) return; klaar = true; clearInterval(klok); registreer(false); fb.className = 'feedback fout'; fb.textContent = msg || 'Jammer, deze keer niet gelukt.'; };
+  const ctx = { bron, taal: spel.taal, klaar: () => setTimeout(gelukt, 250), mislukt, niveau };
   let inst;
   try { inst = spel.maak(niveau, veld, ctx); } catch (e) { console.error(e); veld.append(el('p', {}, 'Oei, deze opgave lukte niet. Klik op "Nieuwe opgave".')); }
   huidig = { inst, verlaat: doe => { if (!klaar && pogingen + hints > 0) registreer(false); stopSpel(); doe(); } };

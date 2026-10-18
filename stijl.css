@@ -568,3 +568,57 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .uit-b-rij { display: grid; grid-template-columns: 2rem minmax(160px, 320px) 1fr auto; gap: .7rem; align-items: start; border: 1.5px solid var(--lijn); border-radius: 12px; padding: .5rem; }
 .uit-b-rij img { width: 100%; border: 1px solid var(--lijn); border-radius: 6px; } .uit-b-velden { display: grid; gap: .3rem; } .uit-b-knoppen { display: grid; gap: .2rem; }
 @media (max-width: 800px) { .uit-b-rij { grid-template-columns: 2rem 1fr; } .uit-b-velden, .uit-b-knoppen { grid-column: 1 / -1; } }
+/* ---------- oefenwedstrijd ---------- */
+.wd-balk { position: sticky; top: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 1rem; background: var(--papier); border: 2px solid var(--lijn); border-radius: 12px; padding: .5rem .9rem; margin-bottom: .8rem; }
+.wd-klok { font: 700 1.2rem 'Fredoka', sans-serif; color: var(--teal); } .wd-klok.bijna { color: var(--fout); }
+.wd-uitslag:empty { display: none; } .wd-uitslag { border-radius: 14px; padding: .8rem 1rem; margin-bottom: .8rem; border: 2px solid var(--lijn); } .wd-uitslag.goed { background: var(--goed-l); border-color: var(--goed); } .wd-uitslag.fout { background: #FDECEA; border-color: var(--fout); } .wd-uitslag h2 { margin: 0 0 .3rem; }
+.uit-vraag.leeg { border-color: #c9a227; } .wd-status { font-weight: 800; color: var(--zacht); }
+/* ---------- ruimtelijk inzicht ---------- */
+.ri-beeld { display: flex; justify-content: center; padding: .4rem; }
+.ri-opties { display: flex; flex-wrap: wrap; gap: .6rem; }
+.ri-optie { display: flex; align-items: center; gap: .5rem; background: #fff; border: 2px solid var(--lijn); border-radius: 12px; padding: .4rem .7rem; cursor: pointer; min-height: 3rem; }
+.ri-optie b { font: 700 1.1rem 'Fredoka', sans-serif; color: var(--teal); } .ri-optie span { font: 700 1.3rem 'Fredoka', sans-serif; display: flex; }
+.ri-optie:hover { border-color: var(--oranje); } .ri-optie.gekozen { border-color: var(--oranje); background: #FFF1E3; } .ri-optie.hint { border-color: var(--hint); background: var(--hint-l); }
+.ri-svg { height: auto; max-width: 100%; } .ri-tip:empty { display: none; } .ri-tip { color: #4b2c8a; background: var(--hint-l); border-radius: 10px; padding: .4rem .7rem; margin: 0; }
+.ri-leer { display: flex; flex-wrap: wrap; gap: 1.2rem; align-items: flex-end; margin-bottom: .6rem; } .ri-leer b { display: block; color: var(--teal); margin-bottom: .3rem; }
+/* ---------- logigrammen ---------- */
+.lg-wrap { display: grid; grid-template-columns: minmax(260px, 1fr) auto; gap: 1.2rem; align-items: start; } @media (max-width: 900px) { .lg-wrap { grid-template-columns: 1fr; } }
+.lg-aanw ol { padding-left: 1.4rem; } .lg-aanw li { margin: .35rem 0; cursor: pointer; font-size: 1.05rem; } .lg-aanw li.weg { text-decoration: line-through; color: var(--zacht); }
+.lg-tabellen { display: flex; flex-wrap: wrap; gap: 1rem; }
+.lg-tabel { border-collapse: collapse; } .lg-tabel th { padding: .2rem .45rem; text-align: right; font-weight: 800; color: var(--teal); }
+.lg-tabel .lg-kop { height: 6.2rem; vertical-align: bottom; padding: 0; } .lg-tabel .lg-kop span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); padding: .3rem 0; font-weight: 700; color: #1F2A2E; }
+.lg-tabel .lg-soort { text-align: left; color: var(--oranje-d); vertical-align: bottom; }
+.lg-tabel td { padding: 0; border: 1.5px solid #9a9488; }
+.lg-cel { width: 2.2rem; height: 2.2rem; border: none; background: #fff; font: 800 1.2rem 'Nunito', sans-serif; cursor: pointer; }
+.lg-cel.s1 { color: var(--fout); background: #fdf3f1; } .lg-cel.s2 { color: var(--goed); background: var(--goed-l); } .lg-cel.hint { color: var(--hint); background: var(--hint-l); }
+.lg-hulpkop { flex-basis: 100%; margin-top: .4rem; } .lg-tabel.hulp .lg-soort { font-size: .85rem; } .lg-tabel.hulp th { font-weight: 700; }
+/* ---------- strategiespellen ---------- */
+.nim-info { font-weight: 800; color: var(--teal); margin: .4rem 0 .8rem; min-height: 1.4em; }
+.nim-bord { display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-end; padding: 1rem; background: var(--papier); border-radius: 14px; min-height: 8rem; }
+.nim-stapel { display: flex; flex-direction: column; align-items: center; gap: .4rem; } .nim-stapel b { color: var(--oranje-d); }
+.nim-fiches { display: flex; flex-direction: column; gap: 3px; }
+.nim-fiche { width: 3.6rem; height: 1.05rem; border-radius: 99px; border: 2px solid #8a5a12; background: radial-gradient(ellipse at 50% 30%, #FFE08A, #E0A526); padding: 0; }
+.nim-fiche.mag { cursor: pointer; } .nim-fiche.kies { background: #E74C3C; border-color: #922; } .nim-fiche:disabled { opacity: .85; }
+.nim-log li { margin: .15rem 0; } .nim-leer p { margin: .3rem 0; display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+/* ---------- raadsels van klasgenoten ---------- */
+.rd-soorten { display: flex; gap: .5rem; flex-wrap: wrap; margin: .6rem 0; }
+.rd-soort { border: 2px solid var(--lijn, #ddd); background: #fff; border-radius: 99px; padding: .45rem 1rem; font-weight: 700; cursor: pointer; }
+.rd-soort.aan { border-color: var(--teal); background: #E3F1F1; }
+.rd-bord { margin: .5rem 0; } .rd-doek { width: 100%; max-width: 560px; aspect-ratio: 7/5; border: 2px solid #ccc; border-radius: 10px; touch-action: none; cursor: crosshair; background: #fff; display: block; }
+.rd-gereedschap { display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; margin-bottom: .4rem; }
+.rd-kleur { width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px #aaa; cursor: pointer; } .rd-kleur.aan { box-shadow: 0 0 0 3px var(--oranje, #E67E22); }
+.rd-gereedschap .aan.klein-knop { background: #FFE9C7; }
+.rd-form { display: grid; gap: .45rem; max-width: 560px; }
+.rd-kaart { background: var(--papier); border-radius: 14px; padding: 1rem; margin: .4rem 0; }
+.rd-vraag { font-size: 1.15rem; font-weight: 700; white-space: pre-wrap; margin: .3rem 0; }
+.rd-prent { max-width: 100%; width: 420px; border-radius: 10px; border: 1px solid #ddd; background: #fff; display: block; } .rd-prent.klein { width: 200px; }
+.rd-teller { font-weight: 800; color: var(--teal); } .rd-antw { max-width: 420px; margin: .6rem 0; }
+.rd-mijn { margin-top: 1.5rem; } .rd-mijnrij { border-top: 1px solid #eee; padding: .6rem 0; }
+.rd-status { font-weight: 700; } .rd-status.wacht { color: #B9770E; } .rd-status.ok { color: #1E8449; } .rd-status.nee { color: #C0392B; }
+.rd-opm { background: #FFF6E0; padding: .4rem .6rem; border-radius: 8px; }
+.rd-lkrij { display: flex; gap: 1rem; flex-wrap: wrap; border-top: 1px solid #eee; padding: .8rem 0; } .rd-lkvelden { flex: 1; min-width: 260px; display: grid; gap: .35rem; }
+.rd-lkvelden label { display: grid; gap: .15rem; font-weight: 700; font-size: .9rem; }
+.rd-lkrij .rd-prent { align-self: flex-start; height: auto; }
+.week { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; background: linear-gradient(90deg, #FFF1D6, #FFE2B8); border: 2px solid #F0B46A; border-radius: 16px; padding: .7rem 1rem; margin: .2rem 0 1rem; }
+.week .ico { font-size: 2rem; } .week-tekst { flex: 1; min-width: 220px; } .week-tekst small { display: block; color: var(--zacht); }
+.week.gedaan { background: #E4F4E8; border-color: #7CC48D; }

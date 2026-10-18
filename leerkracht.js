@@ -275,6 +275,7 @@ function inhoudTab() {
         ' Niveaus in volgorde vrijspelen (eerst brons, dan zilver …). Uit = leerlingen kiezen zelf op welk niveau ze beginnen.'),
       el('div', { style: 'margin-top:1rem' }, el('b', {}, '🛂 Andere uitdagingen in het Kangoeroe-paspoort'), el('p', { class: 'stil' }, 'Eén uitdaging per regel. De leerlingen duiden hiervoor zelf hun status, niveau en gevoel aan.'),
         (() => { const t = el('textarea', { class: 'tekst', rows: 6 }); t.value = paspoortUitdagingen().join('\n'); return [t, el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: async () => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), uitdagingen: t.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean) }; await bewaarInhoud(msg); } }, '💾 Bewaar lijst'))]; })())),
+    raadselBlok(),
     el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
   for (const [soort, titel, uitleg] of INHOUD_SOORTEN) {
     const eigen = EIGEN[soort] || [];
@@ -587,4 +588,37 @@ function paspoortBlok(l) {
       } }, 'Bewaar feedback'), m)));
   }));
   return wrap;
+}
+
+/* ================= Raadsels van klasgenoten ================= */
+function raadselBlok() {
+  const lijst = el('div', { class: 'rd-lk' }, el('p', { class: 'stil' }, 'Raadsels laden…'));
+  const blok = el('div', { class: 'blok', id: 'raadsels' }, el('h3', {}, '🧩 Raadsels van klasgenoten'),
+    el('p', { class: 'stil' }, 'Leerlingen maken zelf raadsels (tekst of tekening). Pas na jouw goedkeuring zien klasgenoten ze bij Logica → Raadsels van klasgenoten. Je kunt het antwoord eerst nog aanpassen.'), lijst);
+  const laadR = async () => {
+    let alle;
+    try { alle = (await api('lk-raadsels')).raadsels || []; } catch (e) { lijst.replaceChildren(melding('fout', e.message)); return; }
+    const wacht = alle.filter(r => r.status === 'wacht'), ok = alle.filter(r => r.status === 'ok'), nee = alle.filter(r => r.status === 'nee');
+    const naam = r => { const l = S.data.leerlingen.find(x => x.id === r.leerlingId); return l ? `${l.voornaam} ${l.naam}${l.klas ? ' (' + l.klas + ')' : ''}` : r.auteur; };
+    const rij = r => {
+      const v = el('textarea', { class: 'tekst', rows: 2 }); v.value = r.vraag || '';
+      const a = el('input', { class: 'tekst', value: r.antwoord }), o = el('input', { class: 'tekst', value: r.ook || '', placeholder: 'Ook goed (gescheiden door ;)' }), h = el('input', { class: 'tekst', value: r.hint || '', placeholder: 'Hint' });
+      const opm = el('input', { class: 'tekst', value: r.opmerking || '', placeholder: 'Opmerking voor de leerling (niet verplicht)' });
+      const zet = async status => { try { await api('lk-raadsel', { raadselId: r.id, status, vraag: v.value, antwoord: a.value, ook: o.value, hint: h.value, opmerking: opm.value }); laadR(); } catch (e) { alert(e.message); } };
+      return el('div', { class: 'rd-lkrij' },
+        r.beeld ? el('img', { src: `/api?actie=beeld&id=${r.beeld}`, class: 'rd-prent klein' }) : null,
+        el('div', { class: 'rd-lkvelden' }, el('div', { class: 'stil' }, `${naam(r)} · ${fmtDatum(r.datum)}${r.status === 'ok' ? ` · ${r.opgelost || 0}× opgelost` : ''}`),
+          el('label', {}, 'Raadsel', v), el('label', {}, 'Antwoord', a), o, h, opm,
+          el('div', { class: 'rij-acties' },
+            r.status !== 'ok' ? el('button', { class: 'knop klein', onclick: () => zet('ok') }, '✅ Goedkeuren') : el('button', { class: 'knop tweede klein', onclick: () => zet('ok') }, '💾 Bewaar'),
+            r.status !== 'nee' ? el('button', { class: 'knop tweede klein', onclick: () => zet('nee') }, '✖ Afkeuren') : null,
+            el('button', { class: 'klein-knop', onclick: async () => { if (!confirm('Dit raadsel definitief verwijderen?')) return; await api('lk-raadsel', { raadselId: r.id, wis: true }); laadR(); } }, '🗑'))));
+    };
+    lijst.replaceChildren(
+      el('h4', {}, `Te bekijken (${wacht.length})`), wacht.length ? null : el('p', { class: 'stil' }, 'Er wachten geen raadsels.'), ...wacht.map(rij),
+      el('details', {}, el('summary', {}, `Goedgekeurd (${ok.length})`), ...ok.map(rij)),
+      nee.length ? el('details', {}, el('summary', {}, `Afgekeurd (${nee.length})`), ...nee.map(rij)) : null);
+  };
+  laadR();
+  return blok;
 }

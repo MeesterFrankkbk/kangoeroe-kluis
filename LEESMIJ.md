@@ -1,6 +1,6 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 46 spellen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 51 onderdelen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
 
 Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 
@@ -56,6 +56,14 @@ Bij **Rekenen → Wiskunde-uitdagingen** maken de leerlingen meerkeuzevragen (A�
 - Diamant: de hele reeks, zonder hulp.
 
 Een nieuwe reeks voeg je zelf toe bij **Eigen inhoud → Wiskunde-uitdagingen → + Nieuw**. Upload de prenten (meerdere tegelijk), vul de sleutel in (bv. `BDDDADCC…`) en schrijf eventueel tips per vraag. Wil je een ingebouwde reeks aanpassen? Kies dan *Kopiëren*.
+
+## Nieuwe onderdelen
+- **Rekenen → Oefenwedstrijd**: een Kangoeroe-reeks onder tijdsdruk, met de echte puntentelling (5 punten juist, 1 punt blanco, 0 punten fout). Brons: vragen 1–8 in 15 minuten. Zilver: 1–16 in 30 minuten. Goud: 9–24 in 30 minuten. Platinum: de hele reeks in 50 minuten. Diamant: idem, maar je hebt 80 % nodig.
+- **Rekenen → Ruimtelijk inzicht**: blokjes tellen, aanzichten, kubusnetten en kubussen draaien.
+- **Logica → Logigrammen**: kruistabellen met aanwijzingen. Elke opgave heeft precies één oplossing.
+- **Logica → Strategiespellen**: Nim tegen de computer (één stapel, het laatste fiche verliest, twee en drie stapels). Er is telkens een winnende strategie. Laat de leerlingen die in hun paspoort uitschrijven.
+- **Logica → Raadsels van klasgenoten**: leerlingen maken zelf een tekstraadsel of tekenraadsel. Jij keurt het eerst goed bij **Eigen inhoud → 🧩 Raadsels van klasgenoten**. Daar kun je het antwoord aanpassen, extra goede antwoorden toevoegen en een opmerking voor de leerling schrijven. Daarna kunnen klasgenoten het raadsel oplossen (brons = 1 raadsel, diamant = 5 na elkaar). Leerlingen zien bij hun eigen raadsels de status en hoe vaak het al werd opgelost. Dit werkt alleen online, niet in oefenmodus.
+- **Uitdaging van de week**: bovenaan het startscherm. Elke maandag kiest de app zelf een spel en een niveau, telkens uit een ander vak. Jij hoeft niets te doen. Wie de uitdaging die week haalt, krijgt een groen vinkje.
 
 ## Goed om te weten
 - Een leerling die van klas verandert, pas je aan in *Leerlingen & codes*. De resultaten blijven bij die leerling, ook over meerdere schooljaren.

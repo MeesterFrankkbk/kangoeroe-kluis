@@ -150,6 +150,64 @@ export default async (req) => {
       return json({ ok: true, paspoort: nieuw });
     }
 
+    /* ---------- raadsels van klasgenoten ---------- */
+    case 'raadsels': {
+      const l = await leerling(); if (!l) return nietLl();
+      const alle = (await store.get('raadsels', { type: 'json' })) || [];
+      return json({ raadsels: alle.filter(r => r.status === 'ok' && r.leerlingId !== l.id).map(({ leerlingId, opmerking, ...r }) => r), mijn: alle.filter(r => r.leerlingId === l.id) });
+    }
+    case 'raadsel-insturen': {
+      const l = await leerling(); if (!l) return nietLl();
+      const b = body.raadsel || {};
+      const tekst = (s, n) => String(s || '').trim().slice(0, n);
+      const r = { id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), leerlingId: l.id, auteur: l.voornaam, klas: l.klas || '', soort: b.soort === 'tekening' ? 'tekening' : 'tekst',
+        vraag: tekst(b.vraag, 600), antwoord: tekst(b.antwoord, 80), ook: tekst(b.ook, 200), hint: tekst(b.hint, 200), uitleg: tekst(b.uitleg, 400), status: 'wacht', datum: new Date().toISOString(), opgelost: 0 };
+      if (!r.antwoord || (!r.vraag && r.soort === 'tekst')) return json({ fout: 'Vul een raadsel en het antwoord in.' }, 400);
+      const alle = (await store.get('raadsels', { type: 'json' })) || [];
+      if (alle.filter(x => x.leerlingId === l.id && x.status === 'wacht').length >= 5) return json({ fout: 'Je hebt al 5 raadsels die wachten op je leerkracht. Wacht even tot die bekeken zijn.' }, 429);
+      if (r.soort === 'tekening') {
+        const m = /^data:(image\/(png|jpeg));base64,(.+)$/.exec(String(b.tekening || ''));
+        const buf = m && Buffer.from(m[3], 'base64');
+        if (!buf || buf.length > 600_000) return json({ fout: 'De tekening is te groot of ongeldig.' }, 400);
+        r.beeld = 'rb' + r.id.slice(1); await store.set('beeld/' + r.beeld, buf, { metadata: { type: m[1] } });
+      }
+      alle.push(r);
+      while (alle.length > 400) { const k = alle.findIndex(x => x.status !== 'ok'); const [weg] = alle.splice(k >= 0 ? k : 0, 1); if (weg.beeld) await store.delete('beeld/' + weg.beeld); }
+      await store.setJSON('raadsels', alle);
+      return json({ ok: true, raadsel: r });
+    }
+    case 'raadsel-weg': {
+      const l = await leerling(); if (!l) return nietLl();
+      const alle = (await store.get('raadsels', { type: 'json' })) || [];
+      const weg = alle.find(r => r.id === body.raadselId && r.leerlingId === l.id);
+      if (weg) { if (weg.beeld) await store.delete('beeld/' + weg.beeld); await store.setJSON('raadsels', alle.filter(r => r !== weg)); }
+      return json({ ok: true });
+    }
+    case 'raadsel-opgelost': {
+      const l = await leerling(); if (!l) return nietLl();
+      const alle = (await store.get('raadsels', { type: 'json' })) || [];
+      const r = alle.find(x => x.id === body.raadselId && x.leerlingId !== l.id);
+      if (r) { r.opgelost = (r.opgelost || 0) + 1; await store.setJSON('raadsels', alle); }
+      return json({ ok: true });
+    }
+    case 'lk-raadsels': {
+      if (!isLeerkracht) return nietLk();
+      return json({ raadsels: (await store.get('raadsels', { type: 'json' })) || [] });
+    }
+    case 'lk-raadsel': {
+      if (!isLeerkracht) return nietLk();
+      let alle = (await store.get('raadsels', { type: 'json' })) || [];
+      if (body.wis) { const weg = alle.find(r => r.id === body.raadselId); if (weg?.beeld) await store.delete('beeld/' + weg.beeld); alle = alle.filter(r => r !== weg); }
+      else {
+        const r = alle.find(x => x.id === body.raadselId); if (!r) return json({ fout: 'Raadsel niet gevonden.' }, 404);
+        for (const k of ['vraag', 'antwoord', 'ook', 'hint', 'uitleg']) if (typeof body[k] === 'string') r[k] = body[k].trim().slice(0, k === 'vraag' ? 600 : 400);
+        if (['ok', 'nee', 'wacht'].includes(body.status)) r.status = body.status;
+        if (typeof body.opmerking === 'string') r.opmerking = body.opmerking.trim().slice(0, 400);
+      }
+      await store.setJSON('raadsels', alle);
+      return json({ ok: true });
+    }
+
     /* ---------- leerkracht ---------- */
     case 'lk-paspoorten': {
       if (!isLeerkracht) return nietLk();
