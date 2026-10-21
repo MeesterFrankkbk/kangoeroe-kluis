@@ -40,7 +40,7 @@ SPELLEN.push({
   id: 'rebus', naam: 'Rebus', vak: 'taal', icoon: '🧠', kort: 'Puzzel woorden en uitdrukkingen uit prentjes.',
   uitleg: 'Elk prentje staat voor een woord. Plak de woorden aan elkaar en voer de letterbewerkingen uit (− R betekent: haal de R weg; M → H betekent: vervang de M door een H). Op diamant ontdek je een uitdrukking en kies je daarna de juiste betekenis.',
   maak(n, doos, ctx) {
-    const pool = U.shuffle(REBUSSEN[n]).slice(0, n === 5 ? 3 : 4);
+    const pool = Vers.kies(REBUSSEN[n], n === 5 ? 3 : 4);
     const rijen = pool.map(rb => {
       const namen = [], velden = [];
       const tokens = rb.p.map(t => {
@@ -125,7 +125,7 @@ SPELLEN.push({
   },
   maak(n, doos) {
     const aantal = [0, 3, 4, 5, 6, 8][n];
-    const keuze = U.shuffle(DROEDELS).slice(0, aantal);
+    const keuze = Vers.kies(DROEDELS, aantal);
     if (n <= 3) {
       const rijen = keuze.map(([t, svg]) => {
         const opties = U.shuffle([t, ...U.shuffle([...DROEDELS.map(d => d[0]), ...DROEDEL_LOK].filter(x => x !== t)).slice(0, n + 1)]);
@@ -226,7 +226,7 @@ SPELLEN.push({
       U.el('p', { class: 'stil' }, 'Zelf maken? Probeer er een paar op papier en laat ze oplossen door iemand uit je groep.'));
   },
   maak(n, doos) {
-    const pool = U.shuffle(LETTERDROEDELS[n]).slice(0, n === 5 ? 3 : 4);
+    const pool = Vers.kies(LETTERDROEDELS[n], n === 5 ? 3 : 4);
     const rijen = pool.map(d => {
       const antw = U.tekst('tekst', 'Welk woord?');
       const lees = U.el('small', { class: 'ld-lees' }, '');
@@ -840,7 +840,7 @@ SPELLEN.push({
       U.el('p', { class: 'stil' }, 'Tip: tel de vakjes. Zo weet je hoeveel letters het woord heeft.'));
   },
   maak(n, doos, ctx) {
-    const zinnen = U.shuffle(rbZinnen(ctx?.bron));
+    const zinnen = Vers.orden(rbZinnen(ctx?.bron));
     if (!zinnen.length) { doos.append(U.el('p', {}, 'Deze lijst heeft geen zinnen. Kies een andere lijst.')); return { controleer: () => ({ ok: false, msg: 'Kies een andere lijst.' }), hint: () => '' }; }
     let rijen = [];
     if (n === 1) { /* losse woorden */
@@ -854,6 +854,7 @@ SPELLEN.push({
       const blokken = [];
       for (const z of zinnen) { if (blokken.length >= aantal) break; if (n >= 3 && !z.b && ctx?.bron && !ctx.bron.eigen) continue; const b = rbZinBlok(z, n, aantal > 1 ? blokken.length + 1 : null); if (b.aandeel >= (n === 2 ? .4 : .6)) blokken.push({ ...b, zin: z }); }
       if (!blokken.length) { const z = zinnen[0]; blokken.push({ ...rbZinBlok(z, n), zin: z }); }
+      Vers.markeer(...blokken.map(b => b.zin));
       rijen = blokken.flatMap(b => b.rijen);
       doos.append(U.el('p', { class: 'opdracht' }, aantal > 1 ? 'Los de rebussen op en koppel elk spreekwoord aan zijn betekenis.' : 'Los de rebus op.'), U.el('div', { class: 'sr-zinnen' }, blokken.map(b => b.el)));
       const metB = blokken.filter(b => b.zin.b);

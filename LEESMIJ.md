@@ -1,6 +1,6 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 51 onderdelen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 52 onderdelen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
 
 Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 
@@ -36,6 +36,7 @@ Belangrijk: **upload het zip-bestand niet zelf** naar GitHub en gebruik **geen N
 14. Leerlingen surfen naar `https://<jouw-site>.netlify.app`.
 
 ### Later iets aanpassen (bv. een nieuwe versie)
+Tip vooraf: klik in de leerkrachtomgeving bij **Eigen inhoud → Reservekopie → Download reservekopie**. Zo heb je al je eigen teksten ook op je computer.
 Pak de nieuwe zip uit. Open je repository op GitHub → **Add file → Upload files** → sleep opnieuw de volledige inhoud van de map erin (bestaande bestanden worden overschreven, nieuwe toegevoegd) → **Commit changes**. Netlify zet de nieuwe versie zelf online. Leerlingen, resultaten, eigen inhoud en toetsen blijven bewaard.
 
 ## Kangoeroe-paspoort
@@ -47,7 +48,7 @@ Het paspoort volgt een leerling 3 schooljaren lang:
 - **Mijn groei** (voor 3 jaar): per kluis 1 blokje per 5 medailles. Een kluis heeft dus evenveel blokjes als onderdelen.
 
 Leerlingen vullen dit in via het tabblad **🛂 Mijn paspoort**. Jij ziet het paspoort onderaan bij elke leerling in het overzicht en schrijft daar feedback bij de reflecties.
-Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
+Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. De afdruk is gemaakt voor zwart-wit: dikke lijnen, behaalde medailles met een dikke rand. Kies in het afdrukvenster: A4, marges Standaard, schaal 100 %, koptekst en voettekst uit. Het medailleblad schaalt zichzelf naar één A4, ook als er onderdelen bijkomen. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
 
 ## Wiskunde-uitdagingen
 Bij **Rekenen → Wiskunde-uitdagingen** maken de leerlingen meerkeuzevragen (A–E). Elke vraag is een prent, met per vraag hulp in stapjes.
@@ -63,7 +64,17 @@ Een nieuwe reeks voeg je zelf toe bij **Eigen inhoud → Wiskunde-uitdagingen �
 - **Logica → Logigrammen**: kruistabellen met aanwijzingen. Elke opgave heeft precies één oplossing.
 - **Logica → Strategiespellen**: Nim tegen de computer (één stapel, het laatste fiche verliest, twee en drie stapels). Er is telkens een winnende strategie. Laat de leerlingen die in hun paspoort uitschrijven.
 - **Logica → Raadsels van klasgenoten**: leerlingen maken zelf een tekstraadsel of tekenraadsel. Jij keurt het eerst goed bij **Eigen inhoud → 🧩 Raadsels van klasgenoten**. Daar kun je het antwoord aanpassen, extra goede antwoorden toevoegen en een opmerking voor de leerling schrijven. Daarna kunnen klasgenoten het raadsel oplossen (brons = 1 raadsel, diamant = 5 na elkaar). Leerlingen zien bij hun eigen raadsels de status en hoe vaak het al werd opgelost. Dit werkt alleen online, niet in oefenmodus.
+- **Toneel → Tekst uit het hoofd**: voor een gedicht, versje of tekst die één leerling alleen moet kennen. De tekst verdwijnt strofe per strofe: brons = om de drie woorden een woord weg, zilver = om de twee, goud = alleen beginletters, platinum = om beurten (de computer zegt een regel, de leerling de volgende), diamant = alles uit het hoofd (typen of inspreken). Met "Eerst oefenen in je eigen tempo" laat de leerling de tekst zelf stap voor stap verdwijnen en drukt hij een spiekbriefje met beginletters af. Eigen teksten voeg je toe bij **Eigen inhoud → Teksten om uit het hoofd te leren** (een lege regel tussen de strofen; ook in het Frans of Engels).
+- **Voordracht** (bij Tekst uit het hoofd → "Eerst oefenen in je eigen tempo" → tabblad 🎙 Voordracht): de leerling neemt zichzelf op, met of zonder tekst in beeld, en luistert terug. De app toont het tempo en (in Chrome/Edge) welke woorden hij niet verstond. Daarna beoordeelt de leerling zichzelf. Opnames blijven op de computer van de leerling; met "Bewaar je opname" kan hij ze als bestand bewaren.
+- **Teksten afdrukken**: bij de Toneelrepetitor (eventueel met één rol gemarkeerd) en bij Tekst uit het hoofd (eventueel met een spiekbriefje met beginletters). De knop staat op het startscherm van het onderdeel en bij Eigen inhoud (🖨).
 - **Uitdaging van de week**: bovenaan het startscherm. Elke maandag kiest de app zelf een spel en een niveau, telkens uit een ander vak. Jij hoeft niets te doen. Wie de uitdaging die week haalt, krijgt een groen vinkje.
+
+## Drie jaar lang uitdagend
+- De meeste rekenen- en logica-onderdelen maken elke keer een nieuwe opgave.
+- Onderdelen met een vaste lijst (rebussen, droedels, letterdroedels, spreekwoordrebus, de zinnenspellen) geven een leerling eerst alles wat hij nog nooit kreeg. Pas als alles gezien is, komt het oudste terug. Dat wordt per leerling op de server bijgehouden, dus ook op een andere computer.
+- In de keuzelijst van een onderdeel (bv. de wiskunde-uitdagingen) staat bij elke reeks een ✓ met de hoogste medaille die de leerling er al haalde.
+- Persoonlijk record: per niveau onthoudt de app de snelste tijd zonder hints. Ook na diamant kan een leerling dus nog zijn eigen record proberen te breken.
+- Resultaten blijven bewaard over de schooljaren heen. Wordt het ooit te veel, dan verdwijnen eerst de oudste niet-gelukte pogingen. Behaalde medailles blijven altijd bewaard.
 
 ## Goed om te weten
 - Een leerling die van klas verandert, pas je aan in *Leerlingen & codes*. De resultaten blijven bij die leerling, ook over meerdere schooljaren.

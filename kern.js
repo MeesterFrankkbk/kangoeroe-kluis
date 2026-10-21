@@ -109,6 +109,24 @@ const U = {
 
 function medaille(n, extra = '') { return U.el('span', { class: `med m${n} ${extra}`, title: NIVEAUS[n] || '' }, n ? ['', 'B', 'Z', 'G', 'P', 'D'][n] : ''); }
 
+/* ---------------- Vers: nooit twee keer hetzelfde (zolang er nieuwe inhoud is) ----------------
+   Spellen met een vaste lijst (rebussen, droedels, zinnen …) kiezen eerst wat de leerling nog nooit kreeg,
+   daarna wat het langst geleden is. Wat getoond werd, wordt als korte code bij het resultaat bewaard (ook op de server). */
+const Vers = {
+  spel: null, items: [],
+  start(spelId) { this.spel = spelId; this.items = []; },
+  code(x) { const t = typeof x === 'string' ? x : JSON.stringify(x); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); },
+  laatst() {
+    const m = new Map(), res = (typeof S !== 'undefined' && S.resultaten) || [];
+    for (const r of res) if (r.spel === this.spel && r.items) { const t = Date.parse(r.datum) || 0; for (const c of r.items) if ((m.get(c) || 0) < t) m.set(c, t); }
+    return m;
+  },
+  /* lijst ordenen: nooit gezien (willekeurig) eerst, dan van lang geleden naar recent */
+  orden(lijst) { const m = this.laatst(); return U.shuffle(lijst).map(x => [x, m.get(this.code(x)) || 0]).sort((a, b) => a[1] - b[1]).map(x => x[0]); },
+  kies(lijst, aantal) { const uit = this.orden(lijst).slice(0, aantal); this.markeer(...uit); return uit; },
+  markeer(...xs) { for (const x of xs) { const c = this.code(x); if (!this.items.includes(c)) this.items.push(c); } },
+};
+
 /* ---------------- Bronnen: ingebouwd + eigen inhoud van de leerkracht ---------------- */
 const BRONSOORTEN = {
   woorden: { label: 'Woordenlijst', vak: 'taal' },

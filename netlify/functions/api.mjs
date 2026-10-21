@@ -4,7 +4,7 @@ import { getStore } from '@netlify/blobs';
 const json = (d, status = 200) => new Response(JSON.stringify(d), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const resKey = id => 'res/' + id;
 const toetsKey = (t, l) => `toets/${t}/${l}`;
-const MAX_PER_LEERLING = 5000;
+const MAX_PER_LEERLING = 8000;
 const GRATIE_MS = 2 * 60 * 1000;
 
 const zonderAccent = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
@@ -15,6 +15,13 @@ function normTaal(s, strikt) {
 }
 const vergelijk = (a, juist, strikt) => { const x = normTaal(a, strikt); return x !== '' && String(juist ?? '').split(/\s*[\/|]\s*/).some(j => normTaal(j, strikt) === x); };
 
+/* Te veel resultaten (na jaren)? Eerst de oudste NIET-gelukte pogingen weg; behaalde medailles blijven altijd bewaard. */
+function bijsnoeien(res) {
+  if (res.length <= MAX_PER_LEERLING) return res;
+  let teVeel = res.length - MAX_PER_LEERLING;
+  const uit = res.filter(r => { if (teVeel > 0 && !r.juist) { teVeel--; return false; } return true; });
+  return teVeel > 0 ? uit.slice(teVeel) : uit;
+}
 function schoonResultaat(item) {
   const getal = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
   if (!item || typeof item !== 'object') return null;
@@ -25,6 +32,7 @@ function schoonResultaat(item) {
     niveau: getal(item.niveau, 5) || 1, juist: !!item.juist,
     seconden: getal(item.seconden, 86400), pogingen: getal(item.pogingen, 999), hints: getal(item.hints, 99), punten: getal(item.punten, 100),
     datum: isNaN(Date.parse(item.datum)) ? new Date().toISOString() : new Date(item.datum).toISOString(),
+    ...(Array.isArray(item.items) && item.items.length ? { items: item.items.slice(0, 20).map(x => String(x).slice(0, 12)) } : {}),
   };
 }
 
@@ -76,7 +84,7 @@ export default async (req) => {
       const res = (await store.get(resKey(l.id), { type: 'json' })) || [];
       const ids = new Set(res.map(r => r.id));
       for (const r of nieuw) if (!ids.has(r.id)) res.push(r);
-      await store.setJSON(resKey(l.id), res.slice(-MAX_PER_LEERLING));
+      await store.setJSON(resKey(l.id), bijsnoeien(res));
       return json({ ok: true, aantal: nieuw.length });
     }
 

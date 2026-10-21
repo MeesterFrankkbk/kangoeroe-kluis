@@ -53,10 +53,10 @@ function kiesZin(lijst, min, max, maxWoord = 99) {
   const passend = lijst.filter(z => z.split(' ').every(w => w.length <= maxWoord));
   const bron = passend.length ? passend : INGEBOUWD.zinnen.flatMap(b => b.zinnen).map(r => splitsZin(r).z).filter(z => z.split(' ').every(w => w.length <= maxWoord));
   const binnen = bron.filter(z => z.length >= min && z.length <= max);
-  if (binnen.length) return U.pick(binnen);
+  if (binnen.length) return Vers.kies(binnen, 1)[0];
   const afstand = z => z.length < min ? min - z.length : z.length - max;
   const best = Math.min(...bron.map(afstand));
-  return U.pick(bron.filter(z => afstand(z) === best));
+  return Vers.kies(bron.filter(z => afstand(z) === best), 1)[0];
 }
 const LETTERFREQ = 'EEEEEEEEEENNNNNNNAAAAAAATTTTTIIIIIRRRRROOOOODDDDDSSSSLLLLGGGVVHHKKKMMMUUBBPPWJZCFY';
 

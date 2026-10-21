@@ -622,3 +622,36 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .week { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; background: linear-gradient(90deg, #FFF1D6, #FFE2B8); border: 2px solid #F0B46A; border-radius: 16px; padding: .7rem 1rem; margin: .2rem 0 1rem; }
 .week .ico { font-size: 2rem; } .week-tekst { flex: 1; min-width: 220px; } .week-tekst small { display: block; color: var(--zacht); }
 .week.gedaan { background: #E4F4E8; border-color: #7CC48D; }
+/* ---------- tekst uit het hoofd (solo) ---------- */
+.solo-standen { display: flex; gap: .4rem; flex-wrap: wrap; margin: .8rem 0; }
+.solo-tekst { display: grid; gap: .7rem; font-size: 1.12rem; }
+.solo-strofe { display: grid; grid-template-columns: 2.6rem 1fr; gap: .5rem; padding: .6rem .8rem; border-radius: 12px; background: var(--papier); }
+.solo-strofe.nu { background: #FFF1E3; border-left: 4px solid var(--oranje); }
+.solo-strofe.gedaan { color: var(--zacht); background: var(--goed-l); }
+.solo-nr { font-weight: 800; color: var(--teal); display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.solo-regel { min-height: 1.6em; line-height: 1.9; }
+.solo-regel.computer { color: var(--teal); font-style: italic; }
+.solo-gat { display: inline-block; min-width: 3ch; color: transparent; border-bottom: 2px solid var(--oranje); cursor: pointer; user-select: none; }
+.solo-gat.open { color: var(--oranje-d); }
+.solo-weg { cursor: pointer; font-family: 'Courier New', monospace; color: var(--teal); font-weight: 700; }
+.solo-weg.leeg { display: inline-block; width: 70%; min-height: 1.2em; border-bottom: 2px dotted #bbb; font-family: inherit; color: var(--inkt); font-weight: 400; }
+.solo-invoer { display: flex; gap: .3rem; align-items: center; } .solo-invoer input { flex: 1; }
+.rd-soort.aan, .solo-standen .aan { border-color: var(--teal); background: #E3F1F1; }
+.solo-strofe > .klein-knop { grid-column: 1 / -1; justify-self: start; }
+.drukrij { display: inline-flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+/* ---------- voordracht ---------- */
+.solo-tabs { display: flex; gap: .4rem; margin: .6rem 0 1rem; border-bottom: 2px solid var(--lijn); }
+.solo-tabs button { border: none; background: none; padding: .6rem 1rem; font: 800 1rem inherit; font-family: inherit; color: var(--zacht); cursor: pointer; border-bottom: 4px solid transparent; margin-bottom: -2px; }
+.solo-tabs button.aan { color: var(--teal); border-bottom-color: var(--oranje); }
+.vd-verborgen { padding: 1rem; border: 2px dashed var(--lijn); border-radius: 12px; color: var(--zacht); font-weight: 700; }
+.vd-gemist { text-decoration: underline wavy #C0392B; text-underline-offset: 4px; }
+.vd-status { font-weight: 800; color: var(--teal); min-height: 1.5em; margin: .4rem 0; }
+.knop.rood { background: #C0392B; }
+.vd-res { background: #fff; border: 2px solid var(--lijn); border-radius: 14px; padding: 1rem; margin-top: 1rem; display: grid; gap: .6rem; }
+.vd-res audio { width: 100%; max-width: 480px; }
+.vd-cijfers { margin: 0; padding-left: 1.2rem; } .vd-cijfers li { margin: .2rem 0; }
+.vd-criteria { display: grid; gap: .35rem; } .vd-crit { display: flex; justify-content: space-between; align-items: center; gap: .6rem; flex-wrap: wrap; border-bottom: 1px dashed var(--lijn); padding-bottom: .3rem; }
+.vd-keuze { display: flex; gap: .3rem; } .rd-soort.klein { padding: .25rem .7rem; font-size: .85rem; }
+.vd-vorige { display: grid; gap: .5rem; margin-top: .5rem; } .vd-vorige audio { vertical-align: middle; height: 2rem; }
+.niveauknop .rec { font-size: .72rem; color: var(--teal); font-weight: 800; }
+.succes .record { background: #FFF1D6; border-radius: 10px; padding: .4rem .7rem; font-weight: 800; color: #9A5B00; }

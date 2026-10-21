@@ -34,6 +34,9 @@ const sleutelRes = id => 'kk_res_' + id;
 const punten = r => r.juist ? Math.max(r.niveau * 10 - r.hints * 3, r.niveau * 3) : 0;
 const besteNiveau = (spel, thema) => Math.max(0, ...S.resultaten.filter(r => r.spel === spel.id && r.juist && (thema === undefined || !spel.perThema || r.thema === thema)).map(r => r.niveau));
 const totaal = () => S.resultaten.reduce((a, r) => a + (r.punten || 0), 0);
+/* persoonlijk record: snelste keer juist zonder hints, per onderdeel, lijst en niveau */
+const record = (spel, thema, niveau) => { let b = null; for (const r of S.resultaten) if (r.spel === spel && r.niveau === niveau && r.juist && !r.hints && (r.thema || '') === (thema || '') && (b === null || r.seconden < b)) b = r.seconden; return b; };
+const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 function bewaarResultaat(item) {
   S.resultaten.push(item);
@@ -222,13 +225,13 @@ function toonStart(spel) {
       el('div', { class: 'niveaus' }, [1, 2, 3, 4, 5].map(n => {
         const open = !inVolgorde() || n <= best + 1;
         return el('button', { class: `niveauknop n${n}${best >= n ? ' gehaald' : ''}`, disabled: !open, onclick: () => toonSpel(spel, n, bron) },
-          medaille(n, 'groot' + (open ? '' : ' slot')), el('span', {}, NIVEAUS[n]), el('small', {}, best >= n ? 'gehaald' : open ? 'speel' : '🔒'));
+          medaille(n, 'groot' + (open ? '' : ' slot')), el('span', {}, NIVEAUS[n]), el('small', {}, best >= n ? 'gehaald' : open ? 'speel' : '🔒'), (rec => rec !== null ? el('small', { class: 'rec' }, `⏱ ${mmss(rec)}`) : null)(record(spel.id, spel.bron ? bron?.id || '' : '', n)));
       })),
-      spel.leer ? el('div', { class: 'knoppenrij', style: 'justify-content:center' }, el('button', { class: 'knop tweede', onclick: () => toonLeer(spel, bron) }, spel.leerKnop || '📖 Eerst leren / bekijken')) : null);
+      spel.leer || spel.druk ? el('div', { class: 'knoppenrij', style: 'justify-content:center' }, spel.leer ? el('button', { class: 'knop tweede', onclick: () => toonLeer(spel, bron) }, spel.leerKnop || '📖 Eerst leren / bekijken') : null, spel.druk && bron ? spel.druk(bron) : null) : null);
   };
   const keuze = soort && lijst.length ? el('label', { class: 'bronkeuze' }, el('span', {}, BRONSOORTEN[soort].label + ':'),
     el('select', { onchange: e => { bron = lijst.find(b => b.id === e.target.value); opslag.set('kk_bron_' + spel.id, bron.id); teken(); } },
-      lijst.map(b => el('option', { value: b.id, selected: b === bron }, (b.eigen ? '★ ' : '') + (b.naam || b.titel) + (b.niveau ? ` (${NIVEAUS[b.niveau]})` : ''))))) : null;
+      lijst.map(b => { const bt = spel.perThema ? besteNiveau(spel, b.id) : 0; return el('option', { value: b.id, selected: b === bron }, (b.eigen ? '★ ' : '') + (b.naam || b.titel) + (b.niveau ? ` (${NIVEAUS[b.niveau]})` : '') + (bt ? ` ✓ ${NIVEAUS[bt]}` : '')); }))) : null;
   teken();
   toon(
     el('div', { class: 'spelkop' }, el('button', { class: 'knop tweede', onclick: toonHome }, '← Kluizen'), el('h1', {}, `${spel.icoon} ${spel.naam}`)),
@@ -260,6 +263,8 @@ function toonSpel(spel, niveau, bron) {
   const registreer = juist => {
     if (opgeslagen) return; opgeslagen = true;
     const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), spel: spel.id, thema, themaNaam: bron?.naam || bron?.titel || '', niveau, juist, seconden: Math.round((Date.now() - start) / 1000), pogingen, hints, datum: new Date().toISOString() };
+    if (Vers.spel === spel.id && Vers.items.length) item.items = Vers.items.slice(0, 20);
+    item.vorigRecord = record(spel.id, thema, niveau);
     item.punten = punten(item);
     bewaarResultaat(item);
     return item;
@@ -273,6 +278,7 @@ function toonSpel(spel, niveau, bron) {
   const mislukt = msg => { if (klaar) return; klaar = true; clearInterval(klok); registreer(false); fb.className = 'feedback fout'; fb.textContent = msg || 'Jammer, deze keer niet gelukt.'; };
   const ctx = { bron, taal: spel.taal, klaar: () => setTimeout(gelukt, 250), mislukt, niveau };
   let inst;
+  Vers.start(spel.id);
   try { inst = spel.maak(niveau, veld, ctx); } catch (e) { console.error(e); veld.append(el('p', {}, 'Oei, deze opgave lukte niet. Klik op "Nieuwe opgave".')); }
   huidig = { inst, verlaat: doe => { if (!klaar && pogingen + hints > 0) registreer(false); stopSpel(); doe(); } };
   window.__spel = inst;
@@ -304,6 +310,7 @@ function toonSucces(spel, niveau, bron, item) {
     el('h2', {}, 'De kluis is open!'),
     el('p', {}, `${spel.naam} · ${NIVEAUS[niveau]} in ${item.seconden} seconden${item.hints ? ` met ${item.hints} ${item.hints === 1 ? 'hint' : 'hints'}` : ', zonder hints'}.`),
     el('p', {}, el('b', {}, `+${item.punten} punten`)),
+    !item.hints && item.vorigRecord !== null && item.seconden < item.vorigRecord ? el('p', { class: 'record' }, `🏅 Nieuw persoonlijk record! Vorige keer: ${mmss(item.vorigRecord)}, nu: ${mmss(item.seconden)}.`) : !item.hints && item.vorigRecord === null ? el('p', { class: 'stil' }, `Je eerste tijd zonder hints: ${mmss(item.seconden)}. Kun je die later verbeteren?`) : item.vorigRecord !== null ? el('p', { class: 'stil' }, `Jouw record op dit niveau: ${mmss(item.vorigRecord)} zonder hints.`) : null,
     el('div', { class: 'knoppenrij' },
       volgende ? el('button', { class: 'knop', onclick: () => { ov.remove(); toonSpel(spel, volgende, bron); } }, `Probeer ${NIVEAUS[volgende]}`) : null,
       el('button', { class: 'knop tweede', onclick: () => { ov.remove(); toonSpel(spel, niveau, bron); } }, 'Nog eens'),
