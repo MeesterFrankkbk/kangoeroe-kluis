@@ -655,3 +655,44 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .vd-vorige { display: grid; gap: .5rem; margin-top: .5rem; } .vd-vorige audio { vertical-align: middle; height: 2rem; }
 .niveauknop .rec { font-size: .72rem; color: var(--teal); font-weight: 800; }
 .succes .record { background: #FFF1D6; border-radius: 10px; padding: .4rem .7rem; font-weight: 800; color: #9A5B00; }
+/* ---------- slimme robot & foutenjager ---------- */
+:root { --srcel: 2.1rem; }
+.sr-doolhoven { display: flex; gap: 1rem; flex-wrap: wrap; margin: .6rem 0 1rem; }
+.sr-dhwrap { display: flex; flex-direction: column; gap: .3rem; align-items: flex-start; }
+.sr-dh { display: grid; gap: 2px; width: max-content; background: #5D4037; padding: 3px; border-radius: 8px; }
+.sr-dh.klein { --srcel: 1.55rem; }
+.sr-cel { width: var(--srcel); height: var(--srcel); border-radius: 4px; background: #EEF5F4; display: grid; place-items: center; font-size: calc(var(--srcel) * .62); }
+.sr-cel.wand { background: #6D4C41; } .sr-cel.spoor { background: #FFE0B8; }
+.sr-cel .robot { font-size: calc(var(--srcel) * .7); } .sr-cel .robot-pijl { inset: -.45rem; font-size: .65rem; }
+.sr-uitslag { font-size: .85rem; font-weight: 800; min-height: 1.2em; max-width: 16rem; } .sr-uitslag.goed { color: var(--goed); } .sr-uitslag.fout { color: var(--fout); }
+.sr-werk { display: grid; grid-template-columns: minmax(0, 1.2fr) 1fr; gap: 1.2rem; align-items: start; }
+@media (max-width: 760px) { .sr-werk { grid-template-columns: 1fr; } :root { --srcel: 1.7rem; } }
+.sr-palet { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .5rem; }
+.sr-acties { font-size: .85rem; margin: .3rem 0; display: flex; gap: .3rem; flex-wrap: wrap; align-items: center; }
+.rblok.gekozen { outline: 3px solid #111; outline-offset: 2px; }
+.bT { background: #D35400; } .bI { background: #8E44AD; } .bX { background: #A569BD; }
+.sr-prog { min-height: 4rem; }
+
+/* ---------- meesterproef ---------- */
+.meester-rij { display: flex; flex-direction: column; align-items: center; gap: .3rem; margin: .8rem 0; }
+.meester-rij p { max-width: 34rem; text-align: center; margin: 0; }
+.niveauknop.meester { min-width: 12rem; background: linear-gradient(135deg, #FFF6D8, #FFE9A8); border-color: #E2B33C; }
+.niveauknop.meester:disabled { filter: grayscale(1); opacity: .6; }
+.niveauknop.meester.gehaald { box-shadow: 0 0 0 3px #E2B33C; }
+.kroon { font-size: 1.1rem; } .kroon.groot { font-size: 2rem; } .kroon.reus { font-size: 5rem; line-height: 1; }
+.badge-meester { background: #FFE9A8; color: #7A5300; border-radius: 99px; padding: .2rem .7rem; font-weight: 800; font-size: .85rem; }
+.meester-succes { border: 4px solid #E2B33C; }
+.kaart-kop > span:last-child { display: inline-flex; gap: .3rem; align-items: center; }
+/* ---------- ingebouwde inhoud beheren ---------- */
+.tabs.klein button { font-size: .9rem; padding: .35rem .8rem; }
+.ib-lijst { display: grid; gap: .2rem; margin: .4rem 0 .8rem; }
+.ib-rij { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; border-bottom: 1px dashed var(--lijn); padding: .2rem 0; }
+.ib-rebus { flex: 1; min-width: 12rem; font-size: 1.05rem; }
+.ib-aan { font-size: .85rem; white-space: nowrap; }
+.ib-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; margin: .5rem 0 1rem; }
+.ib-droedel { border: 1px solid var(--lijn); border-radius: 10px; padding: .4rem; display: grid; gap: .3rem; background: #fff; }
+.ib-droedel .droedel { width: 100%; aspect-ratio: 1; } .ib-droedel .droedel svg, .ib-droedel .droedel img { width: 100%; height: 100%; }
+.ib-droedel.uit { opacity: .45; } .ib-droedel small { line-height: 1.2; }
+.ib-droedel.ld .ld-beeld { transform: scale(.8); transform-origin: left top; }
+.ib-form { margin-top: .6rem; }
+.klein-knop.uit { background: #FBE6E4; }

@@ -127,6 +127,13 @@ const Vers = {
   markeer(...xs) { for (const x of xs) { const c = this.code(x); if (!this.items.includes(c)) this.items.push(c); } },
 };
 
+/* ---------------- Ingebouwde inhoud die de leerkracht uitzette (EIGEN.uit[soort] = codes) ---------------- */
+const Ingebouwd = {
+  uit(soort) { return new Set((typeof EIGEN !== 'undefined' && EIGEN.uit && EIGEN.uit[soort]) || []); },
+  /* lijst zonder uitgezette items; blijft er minder over dan 'min', dan toch alles (de opgave moet altijd lukken) */
+  pool(soort, lijst, eigen = [], min = 1) { const u = this.uit(soort); const f = [...lijst.filter(x => !u.has(Vers.code(x))), ...eigen]; return f.length >= min ? f : [...lijst, ...eigen]; },
+};
+
 /* ---------------- Bronnen: ingebouwd + eigen inhoud van de leerkracht ---------------- */
 const BRONSOORTEN = {
   woorden: { label: 'Woordenlijst', vak: 'taal' },
@@ -143,7 +150,9 @@ const INGEBOUWD = Object.fromEntries(Object.keys(BRONSOORTEN).map(k => [k, []]))
 let EIGEN = {};
 function bronnen(soort) {
   const eigen = (EIGEN[soort] || []).filter(b => !b.verborgen).map(b => ({ ...b, eigen: true }));
-  return [...eigen, ...(INGEBOUWD[soort] || [])];
+  const verborgen = new Set(EIGEN.verborgen || []);
+  const ingebouwd = (INGEBOUWD[soort] || []).filter(b => !verborgen.has(b.id));
+  return [...eigen, ...(ingebouwd.length || eigen.length ? ingebouwd : INGEBOUWD[soort] || [])];
 }
 function bronVan(soort, id) { const l = bronnen(soort); return l.find(b => b.id === id) || l[0]; }
 

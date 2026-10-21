@@ -39,7 +39,7 @@ function medaillesVan(resultaten = [], jaar = schooljaarVan()) {
   const best = f => Math.max(0, ...f.map(r => r.niveau));
   return Object.fromEntries(SPELLEN.map(s => {
     const ok = resultaten.filter(r => r.spel === s.id && r.juist);
-    return [s.id, { eerder: best(ok.filter(r => schooljaarVan(r.datum) < jaar)), nu: best(ok.filter(r => schooljaarVan(r.datum) <= jaar)) }];
+    return [s.id, { eerder: best(ok.filter(r => schooljaarVan(r.datum) < jaar)), nu: best(ok.filter(r => schooljaarVan(r.datum) <= jaar)), kroon: ok.some(r => r.meester && schooljaarVan(r.datum) <= jaar) }];
   }));
 }
 /* Groei per schooljaar en per vak: medailles = per spel het hoogste niveau tot en met dat jaar (max. 5 per spel). */
@@ -90,12 +90,12 @@ function paspoortHTML(lijst, opties = {}) {
     const blok = ({ k }) => {
       const sp = spellenVan(k), v = gj?.vakken[k];
       return `<div class="kluis"><h3>${VAKKEN[k].icoon} ${VAKKEN[k].naam}<span>${v ? v.med : '……'} / ${sp.length * 5}</span></h3>
-        ${sp.map(s => { const m = gj?.medailles[s.id]; return `<div class="ond"><span>${s.icoon || ''} ${esc(s.naam)}</span><span class="meds">${medRijSpel(m?.eerder || 0, m?.nu || 0)}</span></div>`; }).join('')}
-        ${[1, 2].map(() => `<div class="ond nieuw"><span class="schrijf"></span><span class="meds">${medRij(0)}</span></div>`).join('')}</div>`;
+        ${sp.map(s => { const m = gj?.medailles[s.id]; return `<div class="ond"><span>${s.icoon || ''} ${esc(s.naam)}</span><span class="meds">${medRijSpel(m?.eerder || 0, m?.nu || 0)}${s.geenMeester ? '<span class="kr leeg"></span>' : `<span class="kr${m?.kroon ? ' aan' : ''}" title="meesterproef">♛</span>`}</span></div>`; }).join('')}
+        ${[1, 2].map(() => `<div class="ond nieuw"><span class="schrijf"></span><span class="meds">${medRij(0)}<span class="kr">♛</span></span></div>`).join('')}</div>`;
     };
     h += `<section class="blad">${kop(`Mijn medailles · ${jaarTxt(sj)}`)}
       <p class="uitleg">${blanco ? 'Nieuw schooljaar, nieuw blad. Zet eerst een ✓ in de medailles die je vorig jaar al had. Kleur daarna elke medaille die je dit jaar haalt. Schrijf bovenaan elke kluis hoeveel medailles je in totaal hebt (✓ en gekleurd samen). Komt er een nieuw onderdeel bij in de app? Schrijf het op een lege lijn.' : 'Gekleurd = dit schooljaar behaald · ✓ = al behaald in een vorig schooljaar. Bovenaan elke kluis zie je je totaal. Komt er een nieuw onderdeel bij in de app? Schrijf het op een lege lijn.'}
-      <br><b>Brons</b> = ik ken de basis · <b>Zilver</b> = het lukt meestal · <b>Goud</b> = het lukt vlot · <b>Platinum</b> = ik kan het uitleggen · <b>Diamant</b> = ik zoek er zelf nog moeilijkere uitdagingen bij.</p>
+      <br>♛ = meesterproef: drie keer diamant na elkaar, zonder hint. <b>Brons</b> = ik ken de basis · <b>Zilver</b> = het lukt meestal · <b>Goud</b> = het lukt vlot · <b>Platinum</b> = ik kan het uitleggen · <b>Diamant</b> = ik zoek er zelf nog moeilijkere uitdagingen bij.</p>
       <div class="kluizen">${appVakken().map(blok).join('')}</div>
     </section>`;
     /* 3. Andere uitdagingen (per schooljaar) */
@@ -167,6 +167,7 @@ table.ik td { vertical-align: top; border: .35mm solid #000; padding: 0 2mm 1mm;
 .ond.nieuw .schrijf { flex: 1; border-bottom: .3mm solid #666; height: 4mm; margin-right: 3mm; }
 .m { display: inline-grid; place-items: center; width: 5.4mm; height: 5.4mm; border-radius: 50%; border: .35mm solid #000; font: 700 7pt Arial, sans-serif; color: #000; margin-right: .7mm; background: #fff; }
 .ond .m { width: 4.9mm; height: 4.9mm; font-size: 6.6pt; margin-right: .6mm; }
+.kr { display: inline-grid; place-items: center; width: 4.9mm; height: 4.9mm; border: .35mm solid #000; border-radius: 1.2mm; font-size: 8pt; line-height: 1; margin-left: .8mm; color: #000; } .kr.leeg { border-color: transparent; } .kr.aan { background: #F2CE4C; border-width: .7mm; }
 .m.eerder { color: transparent; position: relative; } .m.eerder::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #000; font-size: 8pt; font-weight: 700; }
 /* behaalde medailles: kleur én een dikke rand, zodat je het ook in zwart-wit ziet */
 .m.aan { border-width: .7mm; color: #000; } .m.aan.m1 { background: #E3A46F; } .m.aan.m2 { background: #D0D5D9; } .m.aan.m3 { background: #F2CE4C; } .m.aan.m4 { background: #B9CCD8; } .m.aan.m5 { background: #A8E0F7; }

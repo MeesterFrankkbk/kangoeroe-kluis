@@ -32,6 +32,7 @@ function schoonResultaat(item) {
     niveau: getal(item.niveau, 5) || 1, juist: !!item.juist,
     seconden: getal(item.seconden, 86400), pogingen: getal(item.pogingen, 999), hints: getal(item.hints, 99), punten: getal(item.punten, 100),
     datum: isNaN(Date.parse(item.datum)) ? new Date().toISOString() : new Date(item.datum).toISOString(),
+    ...(item.meester ? { meester: true } : {}),
     ...(Array.isArray(item.items) && item.items.length ? { items: item.items.slice(0, 20).map(x => String(x).slice(0, 12)) } : {}),
   };
 }

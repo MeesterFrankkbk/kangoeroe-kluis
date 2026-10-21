@@ -1,6 +1,6 @@
 # Kangoeroe-Kluis
 
-Uitdagende oefeningen voor kangoeroes (10-13 jaar): 52 onderdelen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
+Uitdagende oefeningen voor kangoeroes (10-13 jaar): 54 onderdelen in 6 vakken (taal, rekenen, logica, Frans, Engels, toneel), elk met 5 niveaus (brons, zilver, goud, platinum, diamant), toetsen en een leerkrachtomgeving.
 
 Standaard kiezen leerlingen zelf op welk niveau ze beginnen. Wil je dat ze bij brons starten en niveau per niveau vrijspelen, zet dat aan bij **Eigen inhoud → Instellingen**.
 
@@ -67,7 +67,17 @@ Een nieuwe reeks voeg je zelf toe bij **Eigen inhoud → Wiskunde-uitdagingen �
 - **Toneel → Tekst uit het hoofd**: voor een gedicht, versje of tekst die één leerling alleen moet kennen. De tekst verdwijnt strofe per strofe: brons = om de drie woorden een woord weg, zilver = om de twee, goud = alleen beginletters, platinum = om beurten (de computer zegt een regel, de leerling de volgende), diamant = alles uit het hoofd (typen of inspreken). Met "Eerst oefenen in je eigen tempo" laat de leerling de tekst zelf stap voor stap verdwijnen en drukt hij een spiekbriefje met beginletters af. Eigen teksten voeg je toe bij **Eigen inhoud → Teksten om uit het hoofd te leren** (een lege regel tussen de strofen; ook in het Frans of Engels).
 - **Voordracht** (bij Tekst uit het hoofd → "Eerst oefenen in je eigen tempo" → tabblad 🎙 Voordracht): de leerling neemt zichzelf op, met of zonder tekst in beeld, en luistert terug. De app toont het tempo en (in Chrome/Edge) welke woorden hij niet verstond. Daarna beoordeelt de leerling zichzelf. Opnames blijven op de computer van de leerling; met "Bewaar je opname" kan hij ze als bestand bewaren.
 - **Teksten afdrukken**: bij de Toneelrepetitor (eventueel met één rol gemarkeerd) en bij Tekst uit het hoofd (eventueel met een spiekbriefje met beginletters). De knop staat op het startscherm van het onderdeel en bij Eigen inhoud (🖨).
+- **Logica → Slimme robot**: één programma moet de robot in drie verschillende doolhoven naar de vlag brengen. De robot moet dus zelf kijken: met "herhaal tot 🏁" en "als vooruit/links/rechts vrij … anders …". Op platinum en diamant ontdekken de leerlingen de rechterhandregel, waarmee je uit elk doolhof raakt.
+- **Logica → Foutenjager**: een robotprogramma dat zou moeten werken, maar fouten bevat. De leerling herstelt het met zo weinig mogelijk wijzigingen: 1 fout op brons en zilver, 2 vanaf goud (ook in functie A of in het programma van een slimme robot). Vanaf goud zijn er maar een paar testritten: eerst nadenken, dan testen.
+- **Meesterproef 👑**: na diamant verschijnt bij elk onderdeel de meesterproef. Dat zijn drie diamant-opgaven na elkaar, zonder één hint. Wie slaagt, krijgt de kroon: op de kaart van het onderdeel, in het paspoort (♛ naast de medailles) en bij jou in het overzicht. De kroon telt niet mee in de medailles, dus de groeitelling blijft kloppen. Bij de wiskunde-uitdagingen, de oefenwedstrijd en de raadsels van klasgenoten is er geen meesterproef: daar zou de leerling drie keer dezelfde opgave krijgen.
 - **Uitdaging van de week**: bovenaan het startscherm. Elke maandag kiest de app zelf een spel en een niveau, telkens uit een ander vak. Jij hoeft niets te doen. Wie de uitdaging die week haalt, krijgt een groen vinkje.
+
+## Ingebouwde inhoud aanpassen
+- **Eigen inhoud → 📦 Ingebouwde inhoud**: bekijk alle rebussen, droedels en letterdroedels die in de app zitten. Zet met het vinkje uit wat je niet wilt gebruiken, bijvoorbeeld omdat je het in de klas al gebruikt.
+- **Eigen rebussen**: kies het niveau, typ de prentjes en bewerkingen (bv. `🐌 slak | + KEN + | 🏠 huis`) en de oplossing. De app rekent je rebus meteen na en waarschuwt als de oplossing niet klopt. Emoji's kies je met de Windows-toets + punt.
+- **Eigen droedels**: teken op papier, neem een foto en voeg hem toe met een titel.
+- **Lijsten en teksten** (woordenlijsten, zinnen, Franse en Engelse teksten, toneel …): bij elke ingebouwde lijst kun je kiezen tussen **👁 zichtbaar / 🙈 verborgen** en **Aanpassen**. Aanpassen maakt een eigen versie die je kunt wijzigen; het origineel wordt dan verborgen.
+- In het najaar van 2026 kwam er extra inhoud bij: 56 rebussen, 12 droedels en 5 Franse en 5 Engelse teksten (elk niveau één).
 
 ## Drie jaar lang uitdagend
 - De meeste rekenen- en logica-onderdelen maken elke keer een nieuwe opgave.

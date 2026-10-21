@@ -7,7 +7,7 @@ const WEDSTRIJD = {
   4: { van: 1, tot: 24, min: 50, drempel: .6 }, 5: { van: 1, tot: 24, min: 50, drempel: .8 },
 };
 SPELLEN.push({
-  id: 'oefenwedstrijd', naam: 'Oefenwedstrijd', vak: 'rekenen', icoon: '⏱️', bron: 'uitdagingen', perThema: true,
+  id: 'oefenwedstrijd', naam: 'Oefenwedstrijd', vak: 'rekenen', icoon: '⏱️', bron: 'uitdagingen', perThema: true, geenMeester: true,
   kort: 'Een Koala-reeks zoals op de echte wedstrijd: tegen de klok, zonder hulp.',
   uitleg: 'Zoals op de echte Kangoeroe-wedstrijd: juist antwoord = 5 punten, geen antwoord = 1 punt, fout antwoord = 0 punten. Je hebt een beperkte tijd en er is geen hulp. Twijfel je echt? Laat de vraag dan open. Klik nog eens op je letter om een antwoord weg te halen. Klik op Controleer om in te leveren. Brons: vragen 1–8 in 15 minuten. Zilver: 1–16 in 30 minuten. Goud: 9–24 in 30 minuten. Platinum: alle 24 in 50 minuten. Voor een medaille heb je 60 % van de punten nodig, op diamant 80 %.',
   leer(doos, ctx) {
@@ -457,7 +457,7 @@ function raadselKaart(r, { metAntwoord = false } = {}) {
 }
 
 SPELLEN.push({
-  id: 'raadsels', naam: 'Raadsels van klasgenoten', vak: 'logica', icoon: '🧩', leerKnop: '✏️ Zelf een raadsel maken',
+  id: 'raadsels', naam: 'Raadsels van klasgenoten', vak: 'logica', icoon: '🧩', geenMeester: true, leerKnop: '✏️ Zelf een raadsel maken',
   kort: 'Los raadsels van je klasgenoten op en maak er zelf een.',
   uitleg: 'Hier vind je raadsels, rebussen en tekenraadsels die je klasgenoten zelf bedachten. Brons = 1 raadsel oplossen, zilver = 2, goud = 3, platinum = 4, diamant = 5 na elkaar. Klik op "✏️ Zelf een raadsel maken" om er zelf een te bedenken: een tekstraadsel of een tekening. Je leerkracht bekijkt het eerst, daarna kunnen je klasgenoten het oplossen.',
   leer(doos) {

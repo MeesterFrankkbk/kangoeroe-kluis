@@ -11,7 +11,7 @@ const REBUSSEN = {
     RB('OORBEL', ['👂', 'oor'], '+', ['🔔', 'bel']), RB('HANDTAS', ['✋', 'hand'], '+', ['👜', 'tas']), RB('HAMERHAAI', ['🔨', 'hamer'], '+', ['🦈', 'haai']),
     RB('ZEESTER', ['🌊', 'zee'], '+', ['⭐', 'ster']), RB('ZEEHOND', ['🌊', 'zee'], '+', ['🐶', 'hond']), RB('BEDLAMP', ['🛏️', 'bed'], '+', ['💡', 'lamp']),
     RB('KERKTOREN', ['⛪', 'kerk'], '+', ['🗼', 'toren']), RB('TANDPASTA', ['🦷', 'tand'], '+', ['🍝', 'pasta']), RB('BALPEN', ['⚽', 'bal'], '+', ['🖊️', 'pen'])],
-  2: [RB('ZONNEBRIL', ['☀️', 'zon'], '+ NE +', ['👓', 'bril']), RB('SLAKKENHUIS', ['🐌', 'slak'], '+ KEN +', ['🏠', 'huis']), RB('KOEKOEK', ['🐄', 'koe'], '+ K +', ['🐄', 'koe'], '+ K'),
+  2: [RB('ZONNEBRIL', ['☀️', 'zon'], '+ NE +', ['👓', 'bril']), RB('SLAKKENHUIS', ['🐌', 'slak'], '+ KEN +', ['🏠', 'huis']), RB('KOEKOEK', ['🐄', 'koe'], '+', ['🐄', 'koe'], '+ K'),
     RB('KONINGSKROON', ['🤴', 'koning'], '+ S +', ['👑', 'kroon']), RB('ZONNEBLOEM', ['☀️', 'zon'], '+ NE +', ['🌸', 'bloem']), RB('PANNENKOEK', ['🍳', 'pan'], '+ NEN +', ['🍪', 'koek']),
     RB('KIKKERVISJE', ['🐸', 'kikker'], '+', ['🐟', 'vis'], '+ JE'), RB('VLINDERDAS', ['🦋', 'vlinder'], '+', ['🦡', 'das']), RB('KATER', ['🐱', 'kat'], '+ ER'),
     RB('VISSER', ['🐟', 'vis'], '+ SER'), RB('SPINNENWEB', ['🕷️', 'spin'], '+ NEN +', ['🕸️', 'web']), RB('MAANDAG', ['🌙', 'maan'], '+ DAG'), RB('STERREN', ['⭐', 'ster'], '+ REN')],
@@ -36,11 +36,30 @@ const REBUSSEN = {
     RB('De koe bij de hoorns vatten', 'De', ['🐄', 'koe'], 'bij de hoorns vatten'), RB('In de wolken zijn', 'In de', ['☁️', 'wolken'], 'zijn'),
     RB('Iets uit je duim zuigen', 'Iets uit je', ['👍', 'duim'], 'zuigen')],
 };
+/* eigen rebussen van de leerkracht: { niveau, a, p, b? } */
+function rebusPool(n, min) { return Ingebouwd.pool('rebus', REBUSSEN[n], ((typeof EIGEN !== 'undefined' && EIGEN.rebussen) || []).filter(r => Number(r.niveau) === n && r.a && r.p?.length).map(r => ({ a: r.a, p: r.p, b: r.b })), min); }
+/* rebus narekenen: past de bewerkingen toe en geeft het resultaat (om fouten op te sporen) */
+function rebusUitkomst(rb, n) {
+  if (n === 5) return rb.p.map(t => typeof t === 'string' ? t : t[1]).join(' ');
+  let uit = '', laatste = 0;
+  for (const t of rb.p) {
+    if (typeof t !== 'string') { laatste = uit.length; uit += t[1].toUpperCase(); continue; }
+    for (const stuk of t.split(/(?=\+)|(?=−)|(?=-)/).map(x => x.trim()).filter(Boolean)) {
+      let m;
+      if ((m = /^\+\s*([A-Z]+)$/i.exec(stuk))) { laatste = uit.length; uit += m[1].toUpperCase(); }
+      else if (/^\+$/.test(stuk)) continue;
+      else if ((m = /^([A-Z]+)$/i.exec(stuk))) { laatste = uit.length; uit += m[1].toUpperCase(); }
+      else if ((m = /^[−-]\s*([A-Z]+)$/i.exec(stuk))) { const w = uit.slice(laatste), k = w.lastIndexOf(m[1].toUpperCase()); if (k >= 0) uit = uit.slice(0, laatste) + w.slice(0, k) + w.slice(k + m[1].length); }
+      else if ((m = /^([A-Z]+)\s*→\s*([A-Z]+)$/i.exec(stuk))) { const w = uit.slice(laatste), k = w.indexOf(m[1].toUpperCase()); if (k >= 0) uit = uit.slice(0, laatste) + w.slice(0, k) + m[2].toUpperCase() + w.slice(k + m[1].length); }
+    }
+  }
+  return uit;
+}
 SPELLEN.push({
   id: 'rebus', naam: 'Rebus', vak: 'taal', icoon: '🧠', kort: 'Puzzel woorden en uitdrukkingen uit prentjes.',
   uitleg: 'Elk prentje staat voor een woord. Plak de woorden aan elkaar en voer de letterbewerkingen uit (− R betekent: haal de R weg; M → H betekent: vervang de M door een H). Op diamant ontdek je een uitdrukking en kies je daarna de juiste betekenis.',
   maak(n, doos, ctx) {
-    const pool = Vers.kies(REBUSSEN[n], n === 5 ? 3 : 4);
+    const pool = Vers.kies(rebusPool(n, n === 5 ? 3 : 4), n === 5 ? 3 : 4);
     const rijen = pool.map(rb => {
       const namen = [], velden = [];
       const tokens = rb.p.map(t => {
@@ -54,7 +73,7 @@ SPELLEN.push({
       let antw = null, mc = null;
       if (n < 5) { antw = U.tekst('tekst', 'Oplossing'); antw.addEventListener('input', () => { U.mark(antw, ''); el.classList.remove('goed', 'fout'); }); el.append(antw); }
       else {
-        const b = betekenisVan(ctx, schoonZin(rb.a));
+        const b = rb.b || betekenisVan(ctx, schoonZin(rb.a));
         if (b) { const pool2 = [...new Set(alleZinItems(ctx).filter(x => x.b && x.b !== b).map(x => x.b))]; const opties = U.shuffle([b, ...U.shuffle(pool2).slice(0, 3)]); mc = rijMC('Wat betekent deze uitdrukking?', opties, opties.indexOf(b)); el.append(mc.el); }
       }
       let hints = 0;
@@ -103,6 +122,9 @@ const DROEDELS = [
   ['Een pinguïn die uit een gat in het ijs kijkt', svgD(`<rect width="200" height="200" fill="#E1F5FE"/><ellipse cx="100" cy="110" rx="50" ry="26" fill="#0D47A1"/><ellipse cx="100" cy="110" rx="26" ry="18" fill="#111"/><circle cx="92" cy="104" r="5" fill="#fff"/><circle cx="108" cy="104" r="5" fill="#fff"/><circle cx="93" cy="104" r="2"/><circle cx="107" cy="104" r="2"/><polygon points="94,112 106,112 100,121" fill="#FB8C00"/>`)],
   ['Een hoge hoed, van bovenaf gezien', svgD(`<rect width="200" height="200" fill="#fff"/><circle cx="100" cy="100" r="80" fill="#222"/><circle cx="100" cy="100" r="44" fill="#333" stroke="#000" stroke-width="3"/><circle cx="100" cy="100" r="50" fill="none" stroke="#B71C1C" stroke-width="6"/>`)],
 ];
+/* eigen droedels van de leerkracht: { titel, beeld } (prent op de server) */
+const droedelHTML = d => `<img src="/api?actie=beeld&id=${encodeURIComponent(d.beeld)}" alt="droedel" style="width:100%;height:100%;object-fit:contain;background:#fff">`;
+function droedelPool(min) { return Ingebouwd.pool('droedels', DROEDELS, ((typeof EIGEN !== 'undefined' && EIGEN.droedels) || []).filter(d => d.titel && d.beeld).map(d => [d.titel, droedelHTML(d)]), min); }
 const DROEDEL_LOK = ['Een olifant die in de spiegel kijkt', 'Een kaars die smelt in de zon', 'Een draak die zijn verjaardagskaarsjes uitblaast', 'Een astronaut die op de maan springt', 'Een spin die aan het plafond hangt', 'Een tandenborstel op vakantie'];
 SPELLEN.push({
   id: 'droedels', naam: 'Droedels', vak: 'taal', icoon: '🖍️', kort: 'Wat stelt die rare tekening voor?',
@@ -125,10 +147,10 @@ SPELLEN.push({
   },
   maak(n, doos) {
     const aantal = [0, 3, 4, 5, 6, 8][n];
-    const keuze = Vers.kies(DROEDELS, aantal);
+    const alle = droedelPool(aantal), keuze = Vers.kies(alle, aantal);
     if (n <= 3) {
       const rijen = keuze.map(([t, svg]) => {
-        const opties = U.shuffle([t, ...U.shuffle([...DROEDELS.map(d => d[0]), ...DROEDEL_LOK].filter(x => x !== t)).slice(0, n + 1)]);
+        const opties = U.shuffle([t, ...U.shuffle([...new Set([...alle.map(d => d[0]), ...DROEDEL_LOK])].filter(x => x !== t)).slice(0, n + 1)]);
         const r = rijMC(U.el('div', { class: 'droedel', html: svg }), opties, opties.indexOf(t));
         r.el.classList.add('droedel-rij'); return r;
       });
@@ -226,7 +248,7 @@ SPELLEN.push({
       U.el('p', { class: 'stil' }, 'Zelf maken? Probeer er een paar op papier en laat ze oplossen door iemand uit je groep.'));
   },
   maak(n, doos) {
-    const pool = Vers.kies(LETTERDROEDELS[n], n === 5 ? 3 : 4);
+    const pool = Vers.kies(Ingebouwd.pool('letterdroedels', LETTERDROEDELS[n], [], n === 5 ? 3 : 4), n === 5 ? 3 : 4);
     const rijen = pool.map(d => {
       const antw = U.tekst('tekst', 'Welk woord?');
       const lees = U.el('small', { class: 'ld-lees' }, '');

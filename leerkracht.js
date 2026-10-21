@@ -96,7 +96,7 @@ function detail(id) {
     const ok = r.filter(x => x.juist), t = ok.map(x => x.seconden).sort((a, b) => a - b);
     const best = Math.max(0, ...ok.map(x => x.niveau));
     const themas = s.perThema ? [...new Set(ok.map(x => x.themaNaam))].filter(Boolean) : [];
-    return el('tr', {}, el('td', {}, `${s.icoon} ${s.naam}`), el('td', {}, VAKKEN[s.vak].naam), el('td', {}, best ? [medaille(best), ' ', NIVEAUS[best]] : '–'),
+    return el('tr', {}, el('td', {}, `${s.icoon} ${s.naam}`), el('td', {}, VAKKEN[s.vak].naam), el('td', {}, best ? [medaille(best), ' ', NIVEAUS[best], ok.some(x => x.meester) ? ' 👑 meester' : ''] : '–'),
       el('td', {}, String(r.length)), el('td', {}, String(ok.length)), el('td', {}, t.length ? tijd(t[Math.floor(t.length / 2)]) : '–'), el('td', {}, String(r.reduce((a, x) => a + x.hints, 0))),
       el('td', { style: 'white-space:normal' }, themas.join(', ')), el('td', {}, fmtDatum(r.reduce((a, x) => x.datum > a ? x.datum : a, ''))));
   }).filter(Boolean);
@@ -278,6 +278,7 @@ function inhoudTab() {
       el('div', { style: 'margin-top:1rem' }, el('b', {}, '🛂 Andere uitdagingen in het Kangoeroe-paspoort'), el('p', { class: 'stil' }, 'Eén uitdaging per regel. De leerlingen duiden hiervoor zelf hun status, niveau en gevoel aan.'),
         (() => { const t = el('textarea', { class: 'tekst', rows: 6 }); t.value = paspoortUitdagingen().join('\n'); return [t, el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: async () => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), uitdagingen: t.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean) }; await bewaarInhoud(msg); } }, '💾 Bewaar lijst'))]; })())),
     raadselBlok(),
+    ingebouwdBlok(),
     el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
   for (const [soort, titel, uitleg] of INHOUD_SOORTEN) {
     const eigen = EIGEN[soort] || [];
@@ -288,7 +289,9 @@ function inhoudTab() {
           el('button', { class: 'klein-knop', onclick: async () => { if (!confirm(`"${b.naam || b.titel}" verwijderen?`)) return; EIGEN[soort].splice(k, 1); await bewaarInhoud(msg); teken(); } }, 'Verwijderen'))),
         el('details', {}, el('summary', { class: 'stil' }, `Ingebouwd (${INGEBOUWD[soort].length})`),
           el('div', { class: 'sets' }, INGEBOUWD[soort].filter(b => b.id !== 'alles').map(b => el('div', { class: 'set' }, el('span', { style: 'flex:1' }, b.naam || b.titel), el('span', { class: 'stil' }, aantalVan(soort, b)), drukKnopLk(soort, b),
-            el('button', { class: 'klein-knop', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren')))))),
+            el('button', { class: 'klein-knop', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren'),
+            el('button', { class: 'klein-knop', title: 'Maak een eigen versie om aan te passen en verberg het origineel', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); S.inhoudBewerk = { soort, b: c, index: -1, verbergOrigineel: b.id }; teken(); } }, 'Aanpassen'),
+            (v => el('button', { class: 'klein-knop' + (v ? ' uit' : ''), title: v ? 'De leerlingen zien dit niet. Klik om weer te tonen.' : 'Klik om dit te verbergen voor de leerlingen.', onclick: async () => { const set = new Set(EIGEN.verborgen || []); if (v) set.delete(b.id); else set.add(b.id); EIGEN.verborgen = [...set]; await bewaarInhoud(msg); teken(); } }, v ? '🙈 verborgen' : '👁 zichtbaar'))((EIGEN.verborgen || []).includes(b.id))))))),
       el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : soort === 'toneel' ? { titel: '', tekst: '' } : soort === 'solo' ? { titel: '', taal: 'nl', tekst: '' } : soort === 'uitdagingen' ? { naam: '', vragen: [] } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
   }
   wrap.append(el('div', { class: 'blok' }, el('h3', {}, 'Reservekopie'), el('p', { class: 'stil' }, 'Bewaar al je eigen inhoud in één bestand, of zet een reservekopie terug.'),
@@ -300,7 +303,7 @@ function inhoudTab() {
   return wrap;
 }
 
-function inhoudEditor({ soort, b, index }) {
+function inhoudEditor({ soort, b, index, verbergOrigineel }) {
   const msg = el('div');
   const isTekst = soort.endsWith('teksten'), isToneel = soort === 'toneel' || soort === 'solo';
   const naam = el('input', { class: 'veld', value: (isTekst || isToneel ? b.titel : b.naam) || '', placeholder: isTekst || isToneel ? 'Titel' : 'Naam van de lijst (bv. Ridders – les 3)' });
@@ -379,6 +382,7 @@ function inhoudEditor({ soort, b, index }) {
     if (soort.endsWith('-woorden') && nieuw.woorden.length < 4) { msg.replaceChildren(melding('fout', 'Zet minstens 4 woorden in de lijst.')); return; }
     EIGEN[soort] = EIGEN[soort] || [];
     if (index >= 0) EIGEN[soort][index] = nieuw; else EIGEN[soort].push(nieuw);
+    if (S.inhoudBewerk?.verbergOrigineel) EIGEN.verborgen = [...new Set([...(EIGEN.verborgen || []), S.inhoudBewerk.verbergOrigineel])];
     if (await bewaarInhoud(msg)) { S.inhoudBewerk = null; teken(); }
   };
   const proef = () => {
@@ -628,4 +632,71 @@ function raadselBlok() {
   };
   laadR();
   return blok;
+}
+
+/* ================= Ingebouwde inhoud beheren + eigen rebussen en droedels ================= */
+const verkleinPrent = (file, maxB = 800) => new Promise((ok, nok) => {
+  const img = new Image(); img.onload = () => {
+    const sch = Math.min(1, maxB / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * sch); c.height = Math.round(img.height * sch);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    let d = c.toDataURL('image/png'); if (d.length > 900000) d = c.toDataURL('image/jpeg', .88); URL.revokeObjectURL(img.src); ok(d);
+  }; img.onerror = () => nok(new Error(`${file.name} is geen prent.`)); img.src = URL.createObjectURL(file);
+});
+const rebusTekst = rb => rb.p.map(t => typeof t === 'string' ? t : `${t[0]} ${t[1]}`).join(' ');
+/* "🐟 vis | + | 🥣 kom" → delen */
+const rebusDelen = tekst => String(tekst).split('|').map(x => x.trim()).filter(Boolean).map(x => { const m = /^(\p{Extended_Pictographic}[\p{Extended_Pictographic}️‍\p{EMod}]*)\s+(.+)$/u.exec(x); return m ? [m[1], m[2].trim()] : x; });
+function ingebouwdBlok() {
+  S.ibTab = S.ibTab || 'rebus';
+  const msg = el('div'), inhoud = el('div');
+  const zetUit = async (soort, code, aan) => {
+    EIGEN.uit = EIGEN.uit || {}; const lijst = new Set(EIGEN.uit[soort] || []);
+    if (aan) lijst.delete(code); else lijst.add(code);
+    EIGEN.uit[soort] = [...lijst]; await bewaarInhoud(msg); teken2();
+  };
+  const schakel = (soort, item) => { const code = Vers.code(item), aan = !Ingebouwd.uit(soort).has(code); return el('label', { class: 'ib-aan', title: aan ? 'Klik om uit te zetten' : 'Klik om terug aan te zetten' }, el('input', { type: 'checkbox', checked: aan, onchange: e => zetUit(soort, code, e.target.checked) }), aan ? ' aan' : ' uit'); };
+  const tabs = el('div', { class: 'tabs klein' });
+  function teken2() {
+    tabs.replaceChildren(...[['rebus', '🧠 Rebussen'], ['droedels', '🖍️ Droedels'], ['letterdroedels', '🔠 Letterdroedels']].map(([k, t]) => el('button', { class: S.ibTab === k ? 'aan' : '', onclick: () => { S.ibTab = k; teken2(); } }, t)));
+    if (S.ibTab === 'rebus') {
+      const eigen = EIGEN.rebussen || [];
+      const nv = el('select', {}, [1, 2, 3, 4, 5].map(n => el('option', { value: n }, NIVEAUS[n])));
+      const delen = el('input', { class: 'veld', placeholder: 'bv. 🐟 vis | + | 🥣 kom   (prentje + woord, gescheiden door | )' });
+      const opl = el('input', { class: 'veld', placeholder: 'Oplossing, bv. VISKOM (op diamant: de hele uitdrukking)' });
+      const bet = el('input', { class: 'veld', placeholder: 'Betekenis (alleen op diamant, niet verplicht)' });
+      const controle = el('div', { class: 'stil' });
+      const check = () => { const n = Number(nv.value), p = rebusDelen(delen.value); if (!p.some(x => Array.isArray(x))) { controle.textContent = 'Zet minstens één prentje (een emoji gevolgd door het woord).'; return null; } const a = n === 5 ? opl.value.trim() : U.groot(opl.value); const u = rebusUitkomst({ p }, n); const ok = n === 5 ? schoonZin(u) === schoonZin(a) : u === a; controle.replaceChildren(ok ? '✅ Narekenen klopt: ' : '⚠️ Narekenen geeft ', el('b', {}, u || '…'), ok ? '' : ` (en niet ${a || '…'}). Kijk de bewerkingen na: + KEN +, − R, M → H …`); return { niveau: n, a, p, b: n === 5 ? bet.value.trim() : undefined, ok }; };
+      [nv, delen, opl].forEach(x => x.addEventListener('input', check));
+      inhoud.replaceChildren(
+        el('p', { class: 'stil' }, 'Zet een vinkje uit om een rebus niet meer te tonen. Je eigen rebussen komen erbij.'),
+        ...[1, 2, 3, 4, 5].map(n => { const lijst = REBUSSEN[n]; const aan = lijst.filter(rb => !Ingebouwd.uit('rebus').has(Vers.code(rb))).length;
+          return el('details', {}, el('summary', {}, `${NIVEAUS[n]}: ${aan} van ${lijst.length} ingebouwde rebussen aan · ${eigen.filter(r => Number(r.niveau) === n).length} eigen`),
+            el('div', { class: 'ib-lijst' }, lijst.map(rb => el('div', { class: 'ib-rij' }, schakel('rebus', rb), el('span', { class: 'ib-rebus' }, rebusTekst(rb)), el('b', {}, '= ' + rb.a))))); }),
+        el('h4', {}, 'Eigen rebussen'),
+        eigen.length ? el('div', { class: 'ib-lijst' }, eigen.map((r, k) => el('div', { class: 'ib-rij' }, medaille(Number(r.niveau)), el('span', { class: 'ib-rebus' }, rebusTekst(r)), el('b', {}, '= ' + r.a),
+          el('button', { class: 'klein-knop', onclick: async () => { if (!confirm('Deze rebus verwijderen?')) return; EIGEN.rebussen.splice(k, 1); await bewaarInhoud(msg); teken2(); } }, '🗑')))) : el('p', { class: 'stil' }, 'Nog geen eigen rebussen.'),
+        el('div', { class: 'form ib-form' }, el('label', {}, 'Niveau', nv), el('label', {}, 'Prentjes en bewerkingen', delen), el('label', {}, 'Oplossing', opl), el('label', {}, 'Betekenis', bet), controle,
+          el('p', { class: 'stil' }, 'Voorbeelden: "🐌 slak | + KEN + | 🏠 huis" = SLAKKENHUIS · "🐭 muis | M → H" = HUIS · "🕯️ kaars | − R" = KAAS · diamant: "De | 🐱 kat | uit de | 🌳 boom | kijken". Emoji\'s kies je met Windows-toets + punt.'),
+          el('div', { class: 'rij-acties' }, el('button', { class: 'knop klein', onclick: async () => { const r = check(); if (!r || !r.a) { msg.replaceChildren(melding('fout', 'Vul de prentjes en de oplossing in.')); return; } if (!r.ok && !confirm('Het narekenen klopt niet met je oplossing. Toch bewaren?')) return; delete r.ok; EIGEN.rebussen = [...eigen, { id: nieuwId('r'), ...r }]; await bewaarInhoud(msg); teken2(); } }, '+ Rebus toevoegen'))));
+    } else if (S.ibTab === 'droedels') {
+      const eigen = EIGEN.droedels || [];
+      const titel = el('input', { class: 'veld', placeholder: 'Titel, bv. Een kat die achter een muur loopt' }), status = el('div');
+      let beeld = null;
+      const kies = el('input', { type: 'file', accept: 'image/*', onchange: async e => { const f = e.target.files[0]; if (!f) return; status.replaceChildren(melding('info', 'Prent uploaden…')); try { beeld = (await api('lk-beeld', { data: await verkleinPrent(f, 600) })).id; status.replaceChildren(melding('goed', 'Prent klaar. Vul de titel in en klik op Toevoegen.')); } catch (err) { status.replaceChildren(melding('fout', err.message)); } } });
+      inhoud.replaceChildren(
+        el('p', { class: 'stil' }, 'Zet een vinkje uit om een droedel niet meer te tonen. Tip: teken een droedel op papier, neem er een foto van en voeg hem hieronder toe.'),
+        el('div', { class: 'ib-raster' }, DROEDELS.map(d => el('div', { class: 'ib-droedel' + (Ingebouwd.uit('droedels').has(Vers.code(d)) ? ' uit' : '') }, el('div', { class: 'droedel', html: d[1] }), el('small', {}, d[0]), schakel('droedels', d)))),
+        el('h4', {}, 'Eigen droedels'),
+        eigen.length ? el('div', { class: 'ib-raster' }, eigen.map((d, k) => el('div', { class: 'ib-droedel' }, el('div', { class: 'droedel', html: droedelHTML(d) }), el('small', {}, d.titel),
+          el('button', { class: 'klein-knop', onclick: async () => { if (!confirm('Deze droedel verwijderen?')) return; EIGEN.droedels.splice(k, 1); await bewaarInhoud(msg); teken2(); } }, '🗑')))) : el('p', { class: 'stil' }, 'Nog geen eigen droedels.'),
+        el('div', { class: 'form ib-form' }, el('label', {}, 'Tekening (foto of scan)', kies), el('label', {}, 'Titel', titel), status,
+          el('div', { class: 'rij-acties' }, el('button', { class: 'knop klein', onclick: async () => { if (!beeld || !titel.value.trim()) { msg.replaceChildren(melding('fout', 'Kies een prent en vul een titel in.')); return; } EIGEN.droedels = [...eigen, { id: nieuwId('d'), titel: titel.value.trim(), beeld }]; await bewaarInhoud(msg); teken2(); } }, '+ Droedel toevoegen'))));
+    } else {
+      inhoud.replaceChildren(el('p', { class: 'stil' }, 'Zet een vinkje uit om een letterdroedel niet meer te tonen.'),
+        ...[1, 2, 3, 4, 5].map(n => el('details', {}, el('summary', {}, `${NIVEAUS[n]}: ${LETTERDROEDELS[n].filter(d => !Ingebouwd.uit('letterdroedels').has(Vers.code(d))).length} van ${LETTERDROEDELS[n].length} aan`),
+          el('div', { class: 'ib-raster' }, LETTERDROEDELS[n].map(d => el('div', { class: 'ib-droedel ld' + (Ingebouwd.uit('letterdroedels').has(Vers.code(d)) ? ' uit' : '') }, ldBeeld(d), el('small', {}, d.w), schakel('letterdroedels', d)))))));
+    }
+  }
+  teken2();
+  return el('div', { class: 'blok', id: 'ingebouwd' }, el('h3', {}, '📦 Ingebouwde inhoud: rebussen, droedels en letterdroedels'),
+    el('p', { class: 'stil' }, 'Bekijk alles wat in de app zit, zet items uit die je niet wilt gebruiken (bv. omdat je ze in de klas al gebruikt) en voeg je eigen materiaal toe.'), tabs, msg, inhoud);
 }

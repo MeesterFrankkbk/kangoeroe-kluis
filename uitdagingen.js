@@ -161,7 +161,7 @@ function zetBeeld(img, b) {
 const UIT_NIVEAU = ['', 'Deel 1: de eerste vragen', 'Deel 2: de middelste vragen', 'Deel 3: de laatste (moeilijkste) vragen', '8 vragen uit de hele reeks', 'De hele reeks, zonder hulp'];
 
 SPELLEN.push({
-  id: 'uitdagingen', naam: 'Wiskunde-uitdagingen', vak: 'rekenen', icoon: '🏆', bron: 'uitdagingen', perThema: true,
+  id: 'uitdagingen', naam: 'Wiskunde-uitdagingen', vak: 'rekenen', icoon: '🏆', bron: 'uitdagingen', perThema: true, geenMeester: true,
   kort: 'Echte wedstrijdvragen: kies A, B, C, D of E.',
   uitleg: 'Lees elke vraag rustig, maak een schets of reken op kladpapier en kies dan A, B, C, D of E. Zit je vast? Klik op 🧭 Hulp: je krijgt een tip om op weg te gaan, nooit meteen het antwoord. Brons, zilver en goud: telkens een derde van de reeks (van makkelijk naar moeilijk). Platinum: 8 vragen door elkaar. Diamant: de hele reeks zonder hulp.',
   leer(doos, ctx) {

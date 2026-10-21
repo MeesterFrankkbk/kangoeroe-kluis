@@ -36,6 +36,8 @@ const besteNiveau = (spel, thema) => Math.max(0, ...S.resultaten.filter(r => r.s
 const totaal = () => S.resultaten.reduce((a, r) => a + (r.punten || 0), 0);
 /* persoonlijk record: snelste keer juist zonder hints, per onderdeel, lijst en niveau */
 const record = (spel, thema, niveau) => { let b = null; for (const r of S.resultaten) if (r.spel === spel && r.niveau === niveau && r.juist && !r.hints && (r.thema || '') === (thema || '') && (b === null || r.seconden < b)) b = r.seconden; return b; };
+/* meesterproef: 3 keer diamant na elkaar zonder hints */
+const isMeester = (spel, thema) => S.resultaten.some(r => r.spel === spel.id && r.meester && (!spel.perThema || thema === undefined || (r.thema || '') === (thema || '')));
 const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
 function bewaarResultaat(item) {
@@ -172,7 +174,7 @@ function toonHome() {
   const raster = el('div', { class: 'raster' }, spellen.map(s => {
     const best = besteNiveau(s);
     return el('button', { class: 'kaart', onclick: () => toonStart(s) },
-      el('div', { class: 'kaart-kop' }, el('span', { class: 'ico' }, s.icoon), best ? medaille(best) : null),
+      el('div', { class: 'kaart-kop' }, el('span', { class: 'ico' }, s.icoon), el('span', {}, isMeester(s) ? el('span', { class: 'kroon', title: 'Meester' }, '👑') : null, best ? medaille(best) : null)),
       el('h3', {}, s.naam), el('p', {}, s.kort || ''),
       el('div', { class: 'pips' }, [1, 2, 3, 4, 5].map(n => el('span', { class: `pip${n <= best ? ' m' + n : ''}`, title: NIVEAUS[n] }))));
   }));
@@ -227,6 +229,9 @@ function toonStart(spel) {
         return el('button', { class: `niveauknop n${n}${best >= n ? ' gehaald' : ''}`, disabled: !open, onclick: () => toonSpel(spel, n, bron) },
           medaille(n, 'groot' + (open ? '' : ' slot')), el('span', {}, NIVEAUS[n]), el('small', {}, best >= n ? 'gehaald' : open ? 'speel' : '🔒'), (rec => rec !== null ? el('small', { class: 'rec' }, `⏱ ${mmss(rec)}`) : null)(record(spel.id, spel.bron ? bron?.id || '' : '', n)));
       })),
+      spel.geenMeester ? null : (() => { const m = isMeester(spel, thema); return el('div', { class: 'meester-rij' }, el('button', { class: `niveauknop meester${m ? ' gehaald' : ''}`, disabled: best < 5, onclick: () => toonSpel(spel, 5, bron, { ronde: 1 }) },
+        el('span', { class: 'kroon groot' }, '👑'), el('span', {}, 'Meesterproef'), el('small', {}, m ? 'gehaald!' : best < 5 ? 'eerst diamant' : '3× diamant, 0 hints')),
+        el('p', { class: 'stil' }, best < 5 ? 'Na diamant wacht de meesterproef: los drie diamant-opgaven na elkaar op, zonder één hint. Dan beheers je dit echt.' : m ? 'Je bent meester in dit onderdeel. Probeer je record te breken!' : 'Los drie diamant-opgaven na elkaar op, zonder één hint. Lukt het? Dan krijg je de kroon.')); })(),
       spel.leer || spel.druk ? el('div', { class: 'knoppenrij', style: 'justify-content:center' }, spel.leer ? el('button', { class: 'knop tweede', onclick: () => toonLeer(spel, bron) }, spel.leerKnop || '📖 Eerst leren / bekijken') : null, spel.druk && bron ? spel.druk(bron) : null) : null);
   };
   const keuze = soort && lijst.length ? el('label', { class: 'bronkeuze' }, el('span', {}, BRONSOORTEN[soort].label + ':'),
@@ -251,7 +256,7 @@ function toonLeer(spel, bron) {
 let klok = null, huidig = null;
 function stopSpel() { clearInterval(klok); Spraak.stop(); huidig?.inst?.stop?.(); huidig = null; document.querySelector('.overlay')?.remove(); }
 function verlaatSpel(doe) { if (huidig?.verlaat) huidig.verlaat(doe); else { stopSpel(); doe(); } }
-function toonSpel(spel, niveau, bron) {
+function toonSpel(spel, niveau, bron, mp = null) {
   stopSpel();
   const start = Date.now();
   let pogingen = 0, hints = 0, klaar = false, opgeslagen = false;
@@ -265,6 +270,7 @@ function toonSpel(spel, niveau, bron) {
     const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), spel: spel.id, thema, themaNaam: bron?.naam || bron?.titel || '', niveau, juist, seconden: Math.round((Date.now() - start) / 1000), pogingen, hints, datum: new Date().toISOString() };
     if (Vers.spel === spel.id && Vers.items.length) item.items = Vers.items.slice(0, 20);
     item.vorigRecord = record(spel.id, thema, niveau);
+    if (mp && juist && !hints && mp.ronde === 3) item.meester = true;
     item.punten = punten(item);
     bewaarResultaat(item);
     return item;
@@ -273,9 +279,9 @@ function toonSpel(spel, niveau, bron) {
     if (klaar) return; klaar = true; clearInterval(klok);
     const item = registreer(true);
     fb.className = 'feedback goed'; fb.textContent = 'Juist!';
-    kop(); toonSucces(spel, niveau, bron, item);
+    kop(); toonSucces(spel, niveau, bron, item, mp);
   };
-  const mislukt = msg => { if (klaar) return; klaar = true; clearInterval(klok); registreer(false); fb.className = 'feedback fout'; fb.textContent = msg || 'Jammer, deze keer niet gelukt.'; };
+  const mislukt = msg => { if (klaar) return; klaar = true; clearInterval(klok); registreer(false); fb.className = 'feedback fout'; fb.textContent = (msg || 'Jammer, deze keer niet gelukt.') + (mp ? ' De meesterproef begint opnieuw: klik op "Opnieuw beginnen".' : ''); };
   const ctx = { bron, taal: spel.taal, klaar: () => setTimeout(gelukt, 250), mislukt, niveau };
   let inst;
   Vers.start(spel.id);
@@ -288,22 +294,34 @@ function toonSpel(spel, niveau, bron) {
     const r = inst.controleer();
     if (r.ok) gelukt(); else { fb.className = 'feedback ' + (r.info ? 'hint' : 'fout'); fb.textContent = r.msg; }
   };
-  const hintKnop = el('button', { class: 'knop paars', onclick: () => { if (!inst || klaar) return; hints++; fb.className = 'feedback hint'; fb.textContent = '💡 ' + inst.hint(); hintKnop.textContent = `💡 Hint (${hints})`; } }, '💡 Hint');
+  const hintKnop = el('button', { class: 'knop paars', onclick: () => { if (!inst || klaar) return; if (mp && !hints && !confirm('Een hint stopt je meesterproef. Wil je toch een hint?')) return; hints++; fb.className = 'feedback hint'; fb.textContent = '💡 ' + inst.hint(); hintKnop.textContent = `💡 Hint (${hints})`; } }, '💡 Hint');
   toon(
     el('div', { class: 'spelkop' },
       el('button', { class: 'knop tweede', onclick: () => verlaatSpel(() => toonStart(spel)) }, '← Terug'),
-      el('h1', {}, `${spel.icoon} ${spel.naam}`), medaille(niveau), el('span', { class: 'stil' }, NIVEAUS[niveau]),
+      el('h1', {}, `${spel.icoon} ${spel.naam}`), medaille(niveau), el('span', { class: 'stil' }, NIVEAUS[niveau]), mp ? el('span', { class: 'badge-meester' }, `👑 Meesterproef · opgave ${mp.ronde} van 3`) : null,
       bron ? el('span', { class: 'badge-thema' }, bron.naam || bron.titel) : null, timer),
     el('details', { class: 'uitleg' }, el('summary', {}, 'Hoe werkt het?'), spel.uitleg),
     veld,
     el('div', { class: 'acties' },
       el('button', { class: 'knop', onclick: controleer }, '✔ Controleer'), hintKnop,
-      el('button', { class: 'knop tweede', onclick: () => verlaatSpel(() => toonSpel(spel, niveau, bron)) }, '↻ Nieuwe opgave')),
+      el('button', { class: 'knop tweede', onclick: () => verlaatSpel(() => toonSpel(spel, niveau, bron, mp ? { ronde: 1 } : null)) }, mp ? '↻ Opnieuw beginnen' : '↻ Nieuwe opgave')),
     fb);
   veld.querySelector('input:not([readonly]),textarea')?.focus({ preventScroll: true });
 }
 
-function toonSucces(spel, niveau, bron, item) {
+function toonSucces(spel, niveau, bron, item, mp) {
+  if (mp) {
+    const kroon = item.meester, verder = !item.hints && mp.ronde < 3;
+    const ov = el('div', { class: 'overlay' }, el('div', { class: 'succes' + (kroon ? ' meester-succes' : '') },
+      kroon ? el('div', { class: 'kroon reus' }, '👑') : medaille(niveau, 'reus'),
+      el('h2', {}, kroon ? 'Meester!' : item.hints ? 'Gelukt, maar met een hint' : `Opgave ${mp.ronde} van 3 gelukt!`),
+      el('p', {}, kroon ? `Drie keer diamant na elkaar, zonder één hint. Je beheerst ${spel.naam} echt. De kroon staat nu in je paspoort.` : item.hints ? 'Bij de meesterproef mag je geen hints gebruiken. Probeer het opnieuw: drie keer na elkaar zonder hint.' : `Nog ${3 - mp.ronde} te gaan. Geen hints gebruiken!`),
+      el('div', { class: 'knoppenrij' },
+        verder ? el('button', { class: 'knop', onclick: () => { ov.remove(); toonSpel(spel, 5, bron, { ronde: mp.ronde + 1 }); } }, `Verder: opgave ${mp.ronde + 1} van 3`) : null,
+        !verder && !kroon ? el('button', { class: 'knop', onclick: () => { ov.remove(); toonSpel(spel, 5, bron, { ronde: 1 }); } }, 'Opnieuw beginnen') : null,
+        el('button', { class: 'knop tweede', onclick: () => { ov.remove(); toonStart(spel); } }, 'Terug naar het onderdeel'))));
+    document.body.append(ov); return;
+  }
   const volgende = niveau < MAX_NIVEAU ? niveau + 1 : null;
   const ov = el('div', { class: 'overlay' }, el('div', { class: 'succes' },
     medaille(niveau, 'reus'),
@@ -457,7 +475,7 @@ async function toonPaspoort() {
         el('div', { class: 'pp-kluis-kop' }, el('b', {}, `${VAKKEN[k].icoon} ${VAKKEN[k].naam}`), el('small', {}, `${v.med}/${v.max} medailles${v.nieuw ? ` · ${v.nieuw} nieuw dit jaar` : ''}`)),
         el('div', { class: 'pp-meter' }, el('i', { style: `width:${100 * v.med / v.max}%` })),
         spellenVan(k).map(sp => { const m = gj.medailles[sp.id]; return el('div', { class: 'pp-ond' }, el('span', {}, `${sp.icoon || ''} ${sp.naam}`),
-          el('span', { class: 'pp-med' }, [1, 2, 3, 4, 5].map(n => medaille(n, n <= m.eerder ? 'eerder' : n <= m.nu ? '' : 'slot')))); })); })),
+          el('span', { class: 'pp-med' }, [1, 2, 3, 4, 5].map(n => medaille(n, n <= m.eerder ? 'eerder' : n <= m.nu ? '' : 'slot')), m.kroon ? el('span', { class: 'kroon', title: 'Meesterproef gehaald' }, '👑') : null)); })); })),
       el('div', { class: 'label' }, 'Andere uitdagingen (vul zelf in)'),
       el('div', { class: 'pp-lijst' }, paspoortUitdagingen().map(naam => {
         PP.uitdagingen[naam] = PP.uitdagingen[naam] || {};
