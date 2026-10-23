@@ -696,3 +696,4 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .ib-droedel.ld .ld-beeld { transform: scale(.8); transform-origin: left top; }
 .ib-form { margin-top: .6rem; }
 .klein-knop.uit { background: #FBE6E4; }
+.code-tekst .code-woord { margin-right: 1.4rem; display: inline-block; }

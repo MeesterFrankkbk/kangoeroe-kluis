@@ -309,7 +309,8 @@ SPELLEN.push({
       : n === 2 ? U.el('div', { class: 'code-tekst morse' }, woorden.map(w => U.el('span', { class: 'code-woord' }, [...w].map(c => U.el('span', { class: 'm-letter' }, MORSE[c] || c)))))
       : U.el('div', { class: 'code-tekst klein' }, code.map(w => U.el('span', { class: 'code-woord' }, w)));
     const inp = U.el('textarea', { class: 'tekst groot', rows: 2, placeholder: 'Schrijf hier de ontcijferde boodschap…', spellcheck: 'false' });
-    doos.append(U.el('div', { class: 'label' }, 'Sleutel'), sleutel, U.el('div', { class: 'label' }, 'Geheime boodschap'), tekst, inp);
+    const codeNaam = ['', 'getallencode', 'morsecode', 'varkenshokcode', 'vierkantcode', 'code met een sleutelwoord (Vigenère)'][n];
+    doos.append(U.el('div', { class: 'label' }, `Sleutel: ${codeNaam}`), sleutel, U.el('div', { class: 'label' }, 'Geheime boodschap'), tekst, inp);
     const norm = s => U.groot(s).replace(/J/g, n === 4 ? 'I' : 'J');
     return {
       controleer() {
