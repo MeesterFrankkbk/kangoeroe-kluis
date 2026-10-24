@@ -66,12 +66,73 @@ const afleiders = (juist, pool, aantal = 3) => {
 };
 const mcOpties = (juist, pool) => { const opties = U.shuffle([juist, ...afleiders(juist, pool)]); return { opties, juist: opties.indexOf(juist) }; };
 
-/* Tekst met voorleesknoppen en markering van de zin die voorgelezen wordt */
-function tekstBlok(tekst, taal, { verborgen = false } = {}) {
+/* ---------- Woordhulp: klik op een woord voor de vertaling ---------- */
+const nrmW = x => String(x).toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, ' ').trim();
+const LIDW = /^(le |la |les |l'|un |une |des |the |a |an |to )/i;
+/* "woordenboekvorm ; Nederlands ; vorm(en) in de tekst" */
+function leesWoordenlijst(tekst) {
+  return String(tekst || '').split(/\r?\n/).map(r => r.split(/\s*;\s*/).map(x => x.trim())).filter(d => d[0] && d[1])
+    .map(([vr, nl, vormen]) => ({ vr, nl, vormen: (vormen ? vormen.split(/\s*,\s*/) : [vr.replace(LIDW, '')]).map(v => nrmW(v).replace(/[?!.]+$/, '').trim()).filter(Boolean) }));
+}
+function tekstHulp(t) {
+  const b = (typeof TEKSTHULP !== 'undefined' && TEKSTHULP[t.id]) || {};
+  const woorden = leesWoordenlijst(t.woordenlijst ?? b.woorden ?? '');
+  const vert = String(t.vertaling ?? b.vertaling ?? '').split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  const index = new Map();
+  for (const w of woorden) for (const v of w.vormen) if (!index.has(v)) index.set(v, w);
+  const maxN = Math.max(1, ...[...index.keys()].map(k => k.split(' ').length));
+  return { woorden, vert, index, maxN };
+}
+let woordPopup = null;
+function toonWoordhulp(doel, vorm, w, taal) {
+  woordPopup?.remove();
+  Spraak.spreek(vorm, taal);
+  const r = doel.getBoundingClientRect();
+  woordPopup = U.el('div', { class: 'woordhulp', style: `left:${Math.max(8, Math.min(window.innerWidth - 300, r.left + window.scrollX))}px; top:${r.bottom + window.scrollY + 6}px` },
+    U.el('div', {}, U.el('b', {}, vorm), nrmW(w.vr) !== nrmW(vorm) ? U.el('span', { class: 'stil' }, ` → ${w.vr}`) : null),
+    U.el('div', { class: 'nl' }, w.nl),
+    U.el('button', { class: 'luister', type: 'button', title: 'Luister', onclick: e => { e.stopPropagation(); Spraak.spreek(w.vr, taal); } }, '🔊'));
+  document.body.append(woordPopup);
+}
+document.addEventListener('click', e => { if (woordPopup && !e.target.closest('.woordhulp, .gl')) { woordPopup.remove(); woordPopup = null; } });
+/* een zin in stukjes: woorden uit de woordenlijst worden klikbaar (ook uitdrukkingen van meerdere woorden) */
+function zinMetHulp(z, hulp, taal) {
+  const d = z.split(/([\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*)/u), uit = [];
+  const span = (tekst, w) => U.el('span', { class: 'gl', onclick: e => { e.stopPropagation(); toonWoordhulp(e.currentTarget, tekst, w, taal); } }, tekst);
+  for (let p = 0; p < d.length; p++) {
+    if (p % 2 === 0) { if (d[p]) uit.push(d[p]); continue; }
+    let gevonden = false;
+    for (let n = hulp.maxN; n >= 1 && !gevonden; n--) {
+      const eind = p + 2 * (n - 1); if (eind >= d.length) continue;
+      let ok = true; const ws = [];
+      for (let q = p; q <= eind; q += 2) { ws.push(d[q]); if (q < eind && !/^\s+$/.test(d[q + 1])) { ok = false; break; } }
+      if (!ok) continue;
+      const w = hulp.index.get(nrmW(ws.join(' ')));
+      if (w) { uit.push(span(d.slice(p, eind + 1).join(''), w)); p = eind; gevonden = true; }
+    }
+    if (gevonden) continue;
+    const k = d[p].search(/['’]/);
+    const w2 = k > 0 ? hulp.index.get(nrmW(d[p].slice(k + 1))) : null;
+    if (w2) uit.push(d[p].slice(0, k + 1), span(d[p].slice(k + 1), w2)); else uit.push(d[p]);
+  }
+  return uit;
+}
+
+/* Tekst met voorleesknoppen en markering van de zin die voorgelezen wordt.
+   hulp = woordhulp (klikbare woorden); vertaling = knop om de Nederlandse vertaling te tonen */
+function tekstBlok(tekst, taal, { verborgen = false, hulp = null, vertaling = false } = {}) {
   const paragrafen = tekst.split('\n').map(p => splitsZinnen(p));
   const alle = paragrafen.flat();
+  const perZin = hulp && hulp.vert.length === alle.length;
+  let k = 0;
   const spans = [];
-  const box = U.el('div', { class: 'leestekst' + (verborgen ? ' verborgen' : '') }, paragrafen.map(p => U.el('p', {}, p.map(z => { const s = U.el('span', { class: 'zin', title: 'Klik om deze zin te beluisteren', onclick: () => { stop(); Spraak.spreek(z, taal); } }, z + ' '); spans.push(s); return s; }))));
+  const box = U.el('div', { class: 'leestekst' + (verborgen ? ' verborgen' : '') + (hulp && !verborgen ? ' met-hulp' : '') }, paragrafen.map(p => U.el('p', {}, p.map(z => {
+    const nl = perZin ? hulp.vert[k] : null; k++;
+    const s = U.el('span', { class: 'zin', title: 'Klik om deze zin te beluisteren', onclick: () => { stop(); Spraak.spreek(z, taal); } }, ...(hulp ? zinMetHulp(z, hulp, taal) : [z]), ' ');
+    spans.push(s);
+    return nl ? [s, U.el('span', { class: 'nl-zin' }, nl)] : s;
+  }).flat())));
+  const vrijeVertaling = hulp && hulp.vert.length && !perZin ? U.el('div', { class: 'vrije-vertaling' }, hulp.vert.map(x => U.el('p', {}, x))) : null;
   let stopper = null, traag = false;
   const stop = () => { stopper?.(); stopper = null; speel.textContent = verborgen ? '▶ Beluister de tekst' : '▶ Lees voor'; };
   const speel = U.el('button', { class: 'knop klein', type: 'button', onclick: () => {
@@ -80,8 +141,15 @@ function tekstBlok(tekst, taal, { verborgen = false } = {}) {
     stopper = Spraak.leesReeks(alle, taal, { traag, onZin: k => spans.forEach((s, j) => s.classList.toggle('nu', j === k)), onKlaar: () => stop() });
   } }, verborgen ? '▶ Beluister de tekst' : '▶ Lees voor');
   const tr = U.el('button', { class: 'knop klein tweede', type: 'button', onclick: () => { traag = !traag; tr.classList.toggle('aan', traag); } }, '🐢 Traag');
-  const bediening = U.el('div', { class: 'knoppenrij' }, speel, tr, Spraak.ok ? null : U.el('span', { class: 'stil' }, 'Voorlezen werkt niet in deze browser.'));
-  return { el: U.el('div', {}, bediening, box), stop };
+  const vk = vertaling && hulp?.vert.length ? U.el('button', { class: 'knop klein tweede', type: 'button', onclick: () => { const aan = box.classList.toggle('met-vertaling'); vrijeVertaling?.classList.toggle('aan', aan); vk.textContent = aan ? '🙈 Verberg de vertaling' : '🇳🇱 Toon de vertaling'; } }, '🇳🇱 Toon de vertaling') : null;
+  const bediening = U.el('div', { class: 'knoppenrij' }, speel, tr, vk, Spraak.ok ? null : U.el('span', { class: 'stil' }, 'Voorlezen werkt niet in deze browser.'));
+  return { el: U.el('div', {}, bediening, hulp && hulp.woorden.length && !verborgen ? U.el('p', { class: 'stil hulp-tip' }, '💡 Klik op een onderstreept woord: je hoort het en je ziet wat het betekent.') : null, box, vrijeVertaling), stop };
+}
+/* naar de woordenlijst van een tekst (bij Woordenschat) */
+function naarWoordenVanTekst(taal, t) {
+  if (typeof toonStart !== 'function' || typeof opslag === 'undefined') return null;
+  if (tekstHulp(t).woorden.length < 4) return null;
+  return U.el('button', { class: 'knop tweede', type: 'button', onclick: () => { opslag.set(`kk_bron_${taal}-woorden`, 'tw-' + t.id); toonStart(SPELLEN.find(s => s.id === `${taal}-woorden`)); } }, '📚 Oefen eerst de woorden van deze tekst');
 }
 
 function opnamePaneel() {
@@ -110,22 +178,63 @@ function woordenschatSpel(taal) {
     id: `${taal}-woorden`, naam: 'Woordenschat', vak, icoon: '📚', bron: `${taal}-woorden`, perThema: true, taal,
     kort: `Leer en oefen ${T}e woordjes per thema.`,
     uitleg: `Brons: kies de betekenis. Zilver: kies het ${T}e woord. Goud: typ het ${T}e woord. Platinum: luister en typ. Diamant: typ alles foutloos, met lidwoord en accenten.`,
+    leerKnop: '📖 Leren en oefenen',
     leer(doos, ctx) {
-      const L = ctx.bron.woorden;
-      const kaarten = L.map(([nl, vr]) => {
-        const k = U.el('button', { class: 'flashkaart', type: 'button', onclick: () => { k.classList.toggle('om'); if (k.classList.contains('om')) Spraak.spreek(U.eersteVorm(vr), taal); } },
-          U.el('span', { class: 'voor' }, nl), U.el('span', { class: 'achter' }, vr.replace(/\//g, ' / ')));
-        return k;
-      });
-      const raster = U.el('div', { class: 'flashraster' }, kaarten);
+      const L = ctx.bron.woorden.filter(w => w[0] && w[1]);
+      const paneel = U.el('div');
       let stopper = null;
-      doos.append(U.el('p', { class: 'opdracht' }, `Klik op een kaart om ze om te draaien en het ${T}e woord te horen.`),
-        U.el('div', { class: 'knoppenrij' },
-          U.el('button', { class: 'knop klein', onclick: () => { kaarten.forEach(k => k.classList.add('om')); } }, 'Toon alles'),
-          U.el('button', { class: 'knop klein tweede', onclick: () => kaarten.forEach(k => k.classList.remove('om')) }, 'Verberg alles'),
-          U.el('button', { class: 'knop klein tweede', onclick: () => { stopper?.(); stopper = Spraak.leesReeks(L.map(w => U.eersteVorm(w[1])), taal, { onZin: k => kaarten.forEach((x, j) => { x.classList.toggle('nu', j === k); if (j === k) x.classList.add('om'); }) }); } }, '▶ Lees alles voor'),
-          U.el('button', { class: 'knop klein tweede', onclick: () => { raster.replaceChildren(...U.shuffle(kaarten)); } }, '🔀 Hussel')),
-        raster);
+      const tekst = ctx.bron.tekstId ? bronVan(`${taal}-teksten`, ctx.bron.tekstId) : null;
+      const naarTekst = tekst && typeof toonLeer === 'function' ? U.el('button', { class: 'knop tweede klein', type: 'button', onclick: () => toonLeer(SPELLEN.find(s => s.id === `${taal}-teksten`), tekst) }, `📖 Lees de tekst "${tekst.titel}"`) : null;
+      /* 1. woordenlijst met uitspraak; Frans/Engels of Nederlands verbergen om jezelf te testen */
+      const lijst = () => {
+        const rijen = L.map(([nl, vr]) => U.el('tr', {},
+          U.el('td', { class: 'wl-vr', onclick: e => e.currentTarget.classList.toggle('toon') }, U.el('b', {}, vr.replace(/\//g, ' / ')), ' ', Spraak.knoppen(U.eersteVorm(vr), taal)),
+          U.el('td', { class: 'wl-nl', onclick: e => e.currentTarget.classList.toggle('toon') }, nl)));
+        const tabel = U.el('table', { class: 'lijst woordenlijst' }, U.el('tr', {}, U.el('th', {}, T), U.el('th', {}, 'Nederlands')), rijen);
+        const knop = (t, cls) => U.el('button', { class: 'knop klein tweede', type: 'button', onclick: e => { const aan = tabel.classList.toggle(cls); tabel.querySelectorAll('.toon').forEach(x => x.classList.remove('toon')); e.currentTarget.classList.toggle('aan', aan); } }, t);
+        return U.el('div', {}, U.el('p', { class: 'opdracht' }, `Lees elk woord, luister naar de uitspraak (🔊, 🐢 = traag) en zeg het na. Test jezelf: verberg een kolom en klik op een vakje om te spieken.`),
+          U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop klein', type: 'button', onclick: () => { stopper?.(); stopper = Spraak.leesReeks(L.map(w => U.eersteVorm(w[1])), taal, { onZin: k => rijen.forEach((x, j) => x.classList.toggle('nu', j === k)) }); } }, '▶ Lees alles voor'),
+            knop(`🙈 Verberg het ${T}`, 'zonder-vr'), knop('🙈 Verberg het Nederlands', 'zonder-nl')), U.el('div', { class: 'tabelwrap' }, tabel));
+      };
+      /* 2. woordkaarten */
+      const kaarten = () => {
+        const ks = L.map(([nl, vr]) => { const k = U.el('button', { class: 'flashkaart', type: 'button', onclick: () => { k.classList.toggle('om'); if (k.classList.contains('om')) Spraak.spreek(U.eersteVorm(vr), taal); } }, U.el('span', { class: 'voor' }, nl), U.el('span', { class: 'achter' }, vr.replace(/\//g, ' / '))); return k; });
+        const raster = U.el('div', { class: 'flashraster' }, ks);
+        return U.el('div', {}, U.el('p', { class: 'opdracht' }, `Kijk naar het Nederlandse woord. Weet je het ${T}e woord? Klik op de kaart om het te zien en te horen.`),
+          U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop klein tweede', type: 'button', onclick: () => ks.forEach(k => k.classList.add('om')) }, 'Toon alles'), U.el('button', { class: 'knop klein tweede', type: 'button', onclick: () => ks.forEach(k => k.classList.remove('om')) }, 'Verberg alles'), U.el('button', { class: 'knop klein tweede', type: 'button', onclick: () => raster.replaceChildren(...U.shuffle(ks)) }, '🔀 Hussel')), raster);
+      };
+      /* 3. memory: zoek telkens het woord en zijn vertaling */
+      const memory = () => {
+        const wrap = U.el('div'), info = U.el('div', { class: 'mem-info' });
+        const nieuw = () => {
+          const paren = U.shuffle(L).slice(0, Math.min(8, L.length));
+          const kaartjes = U.shuffle(paren.flatMap((w, i) => [{ i, t: U.eersteVorm(w[1]), vr: true }, { i, t: w[0] }]));
+          let open = [], beurten = 0, gevonden = 0, wacht = false;
+          const knoppen = kaartjes.map(c => {
+            const b = U.el('button', { class: 'mem-kaart' + (c.vr ? ' vr' : ''), type: 'button', onclick: () => {
+              if (wacht || b.classList.contains('open') || b.classList.contains('weg')) return;
+              b.classList.add('open'); b.textContent = c.t; if (c.vr) Spraak.spreek(c.t, taal);
+              open.push([b, c]);
+              if (open.length < 2) return;
+              beurten++;
+              const [[b1, c1], [b2, c2]] = open; open = [];
+              if (c1.i === c2.i && c1.vr !== c2.vr) { b1.classList.add('weg'); b2.classList.add('weg'); gevonden++; }
+              else { wacht = true; setTimeout(() => { [b1, b2].forEach(x => { x.classList.remove('open'); x.textContent = '?'; }); wacht = false; }, 1100); }
+              info.textContent = gevonden === paren.length ? `🎉 Alle paren gevonden in ${beurten} beurten! Lukt het de volgende keer in minder?` : `Beurten: ${beurten} · gevonden: ${gevonden} van ${paren.length}`;
+            } }, '?');
+            return b;
+          });
+          info.textContent = `Zoek telkens het ${T}e woord en zijn vertaling. ${paren.length} paren.`;
+          wrap.replaceChildren(U.el('div', { class: 'mem-raster' }, knoppen));
+        };
+        nieuw();
+        return U.el('div', {}, info, wrap, U.el('div', { class: 'knoppenrij' }, U.el('button', { class: 'knop klein tweede', type: 'button', onclick: nieuw }, '🔀 Nieuw spel')));
+      };
+      const tabs = [['📋 Woordenlijst', lijst], ['🃏 Kaarten', kaarten], ['🧠 Memory', memory]];
+      const tabEl = U.el('div', { class: 'solo-tabs' }, tabs.map(([t, f], k) => U.el('button', { type: 'button', class: k ? '' : 'aan', onclick: e => { stopper?.(); Spraak.stop(); tabEl.querySelectorAll('button').forEach(b => b.classList.toggle('aan', b === e.currentTarget)); paneel.replaceChildren(f()); } }, t)));
+      paneel.append(lijst());
+      doos.append(naarTekst ? U.el('div', { class: 'knoppenrij' }, naarTekst) : null, tabEl, paneel);
+      return { stop() { stopper?.(); Spraak.stop(); } };
     },
     maak(n, doos, ctx) {
       const L = ctx.bron.woorden.filter(w => w[0] && w[1]);
@@ -227,10 +336,11 @@ function tekstSpel(taal) {
   return {
     id: `${taal}-teksten`, naam: 'Lezen en luisteren', vak, icoon: '📖', bron: `${taal}-teksten`, perThema: true, taal,
     kort: `Lees, beluister en begrijp ${T} teksten.`,
-    uitleg: 'Brons: lees en beluister de tekst en beantwoord de vragen. Zilver: vul de ontbrekende woorden in met de woordbank. Goud: je hoort de tekst alleen (je ziet hem niet) en beantwoordt de vragen. Platinum: vul de gaten in zonder woordbank. Diamant: dictee! Luister en schrijf de zinnen foutloos.',
+    uitleg: 'Brons: lees en beluister de tekst en beantwoord de vragen. Klik op een onderstreept woord om de betekenis te zien. Zilver: vul de ontbrekende woorden in met de woordbank. Goud: je hoort de tekst alleen (je ziet hem niet) en beantwoordt de vragen. Platinum: vul de gaten in zonder woordbank. Diamant: dictee! Luister en schrijf de zinnen foutloos.',
     leer(doos, ctx) {
-      const tb = tekstBlok(ctx.bron.tekst, taal);
-      doos.append(U.el('h2', {}, ctx.bron.titel), U.el('p', { class: 'opdracht' }, 'Klik op een zin om ze te horen, of laat de hele tekst voorlezen.'), tb.el, opnamePaneel());
+      const tb = tekstBlok(ctx.bron.tekst, taal, { hulp: tekstHulp(ctx.bron), vertaling: true });
+      const knop = naarWoordenVanTekst(taal, ctx.bron);
+      doos.append(U.el('h2', {}, ctx.bron.titel), U.el('p', { class: 'opdracht' }, 'Klik op een zin om ze te horen, of laat de hele tekst voorlezen. Lees eerst zelf. De vertaling gebruik je om te controleren of je het goed begrepen hebt.'), knop ? U.el('div', { class: 'knoppenrij' }, knop) : null, tb.el, opnamePaneel());
       return { stop: tb.stop };
     },
     maak(n, doos, ctx) {
@@ -239,7 +349,7 @@ function tekstSpel(taal) {
       if (!t.vragen?.length && (n === 1 || n === 3)) modus = n + 1;
       doos.append(U.el('h2', {}, t.titel));
       if (modus === 1 || modus === 3) {
-        const tb = tekstBlok(t.tekst, taal, { verborgen: modus === 3 });
+        const tb = tekstBlok(t.tekst, taal, { verborgen: modus === 3, hulp: modus === 1 ? tekstHulp(t) : null });
         doos.append(tb.el);
         const rijen = t.vragen.map((v, k) => { const opties = U.shuffle(v.opties.map((o, j) => ({ o, j }))); return rijMC(`${k + 1}. ${v.v}`, opties.map(x => x.o), opties.findIndex(x => x.j === v.juist)); });
         doos.append(U.el('div', { class: 'label' }, 'Vragen'), U.el('div', { class: 'trijen' }, rijen.map(r => r.el)));
@@ -298,3 +408,6 @@ function tekstSpel(taal) {
 }
 
 SPELLEN.push(tekstSpel('fr'), woordenschatSpel('fr'), FR_WW, tekstSpel('en'), woordenschatSpel('en'), EN_WW);
+/* Woordenschat: ook de woorden van elke tekst bij Lezen en luisteren */
+for (const taal of ['fr', 'en']) BRON_AFGELEID[`${taal}-woorden`] = () => bronnen(`${taal}-teksten`).map(t => ({ t, h: tekstHulp(t) })).filter(x => x.h.woorden.length >= 4)
+  .map(({ t, h }) => ({ id: 'tw-' + t.id, naam: `📖 Woorden uit de tekst: ${t.titel}`, tekstId: t.id, woorden: h.woorden.map(w => [w.nl, w.vr]) }));

@@ -148,11 +148,13 @@ const BRONSOORTEN = {
 };
 const INGEBOUWD = Object.fromEntries(Object.keys(BRONSOORTEN).map(k => [k, []]));
 let EIGEN = {};
+/* lijsten die uit andere inhoud afgeleid worden (bv. de woorden van een tekst) */
+const BRON_AFGELEID = {};
 function bronnen(soort) {
   const eigen = (EIGEN[soort] || []).filter(b => !b.verborgen).map(b => ({ ...b, eigen: true }));
   const verborgen = new Set(EIGEN.verborgen || []);
   const ingebouwd = (INGEBOUWD[soort] || []).filter(b => !verborgen.has(b.id));
-  return [...eigen, ...(ingebouwd.length || eigen.length ? ingebouwd : INGEBOUWD[soort] || [])];
+  return [...eigen, ...(ingebouwd.length || eigen.length ? ingebouwd : INGEBOUWD[soort] || []), ...(BRON_AFGELEID[soort]?.() || [])];
 }
 function bronVan(soort, id) { const l = bronnen(soort); return l.find(b => b.id === id) || l[0]; }
 
@@ -200,7 +202,23 @@ if (Spraak.ok) { speechSynthesis.getVoices(); speechSynthesis.addEventListener?.
 
 /* Zinnen splitsen voor teksten */
 function splitsZinnen(tekst) {
-  return (String(tekst).replace(/\s+/g, ' ').match(/[^.!?]+[.!?]+["»”')]*|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean);
+  /* een afsluitend aanhalingsteken (ook na een spatie, zoals in het Frans: « … ! ») hoort nog bij de zin;
+     bij " wordt bijgehouden of het een openend of een sluitend teken is */
+  const t = String(tekst).replace(/\s+/g, ' '), uit = [];
+  let huidig = '', open = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i]; huidig += ch;
+    if (ch === '"') open = !open; else if (ch === '«' || ch === '“') open = true; else if (ch === '»' || ch === '”') open = false;
+    if (!'.!?'.includes(ch)) continue;
+    while ('.!?'.includes(t[i + 1] || 'x')) huidig += t[++i];
+    let j = i + 1; while (t[j] === ' ') j++;
+    const q = t[j];
+    if (q === '»' || q === '”' || (q === '"' && open) || q === ')' || q === "'") { huidig += t.slice(i + 1, j + 1); i = j; open = false; }
+    if (i + 1 >= t.length || t[i + 1] === ' ') { uit.push(huidig); huidig = ''; }
+  }
+  uit.push(huidig);
+  /* een zin die met een kleine letter begint (« … ? » demande Arthur.) hoort bij de vorige */
+  return uit.map(x => x.trim()).filter(x => /[\p{L}\p{N}]/u.test(x)).reduce((acc, x) => { if (acc.length && /^\p{Ll}/u.test(x)) acc[acc.length - 1] += ' ' + x; else acc.push(x); return acc; }, []);
 }
 
 if (typeof module !== 'undefined') module.exports = { U, NIVEAUS, SPELLEN };

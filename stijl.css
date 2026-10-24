@@ -697,3 +697,25 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .ib-form { margin-top: .6rem; }
 .klein-knop.uit { background: #FBE6E4; }
 .code-tekst .code-woord { margin-right: 1.4rem; display: inline-block; }
+/* ---------- woordhulp en vertaling bij teksten ---------- */
+.leestekst.met-hulp .gl { border-bottom: 2px dotted var(--teal); cursor: help; border-radius: 2px; }
+.leestekst.met-hulp .gl:hover { background: #E3F1F1; }
+.woordhulp { position: absolute; z-index: 50; background: #fff; border: 2px solid var(--teal); border-radius: 12px; padding: .5rem .8rem; box-shadow: 0 6px 20px rgba(0,0,0,.18); max-width: 290px; display: grid; gap: .2rem; font-size: 1rem; }
+.woordhulp .nl { font-weight: 800; color: var(--oranje-d); }
+.woordhulp .luister { justify-self: start; }
+.nl-zin { display: none; }
+.leestekst.met-vertaling .zin { display: block; margin-top: .55rem; }
+.leestekst.met-vertaling .nl-zin { display: block; color: var(--zacht); font-style: italic; font-size: .95em; }
+.vrije-vertaling { display: none; background: var(--papier); border-radius: 12px; padding: .6rem 1rem; color: var(--zacht); font-style: italic; margin-top: .6rem; }
+.vrije-vertaling.aan { display: block; }
+.hulp-tip { margin: .2rem 0 .4rem; }
+/* ---------- woordenlijst, memory ---------- */
+.woordenlijst td { cursor: default; } .woordenlijst tr.nu td { background: #FFF1E3; }
+.woordenlijst.zonder-vr .wl-vr:not(.toon) > *, .woordenlijst.zonder-nl .wl-nl:not(.toon) { filter: blur(6px); cursor: pointer; user-select: none; }
+.woordenlijst.zonder-vr .wl-vr, .woordenlijst.zonder-nl .wl-nl { cursor: pointer; }
+.mem-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .5rem; margin: .6rem 0; }
+.mem-kaart { min-height: 4.2rem; border-radius: 12px; border: 2px solid var(--lijn); background: var(--teal); color: #fff; font: 800 1.4rem inherit; font-family: inherit; cursor: pointer; padding: .3rem; }
+.mem-kaart.open { background: #fff; color: var(--inkt); font-size: 1rem; }
+.mem-kaart.open.vr { color: var(--teal); }
+.mem-kaart.weg { background: var(--goed-l); color: var(--goed); border-color: var(--goed); font-size: 1rem; cursor: default; }
+.mem-info { font-weight: 800; color: var(--teal); }

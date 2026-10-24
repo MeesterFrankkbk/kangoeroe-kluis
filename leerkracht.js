@@ -267,6 +267,7 @@ async function bewaarInhoud(msgEl) {
 }
 
 const drukKnopLk = (soort, b) => soort === 'toneel' ? el('button', { class: 'klein-knop', title: 'Afdrukken', onclick: () => drukToneel(b) }, '🖨') : soort === 'solo' ? el('button', { class: 'klein-knop', title: 'Afdrukken met spiekbriefje', onclick: () => drukSolo(b) }, '🖨') : null;
+const kopieMetHulp = b => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); const h = typeof TEKSTHULP !== 'undefined' && TEKSTHULP[b.id]; if (h) { c.woordenlijst = h.woorden; c.vertaling = h.vertaling; } return c; };
 function inhoudTab() {
   if (S.inhoudBewerk) return inhoudEditor(S.inhoudBewerk);
   const msg = el('div');
@@ -289,8 +290,8 @@ function inhoudTab() {
           el('button', { class: 'klein-knop', onclick: async () => { if (!confirm(`"${b.naam || b.titel}" verwijderen?`)) return; EIGEN[soort].splice(k, 1); await bewaarInhoud(msg); teken(); } }, 'Verwijderen'))),
         el('details', {}, el('summary', { class: 'stil' }, `Ingebouwd (${INGEBOUWD[soort].length})`),
           el('div', { class: 'sets' }, INGEBOUWD[soort].filter(b => b.id !== 'alles').map(b => el('div', { class: 'set' }, el('span', { style: 'flex:1' }, b.naam || b.titel), el('span', { class: 'stil' }, aantalVan(soort, b)), drukKnopLk(soort, b),
-            el('button', { class: 'klein-knop', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren'),
-            el('button', { class: 'klein-knop', title: 'Maak een eigen versie om aan te passen en verberg het origineel', onclick: () => { const c = JSON.parse(JSON.stringify(b)); c.id = nieuwId('e'); S.inhoudBewerk = { soort, b: c, index: -1, verbergOrigineel: b.id }; teken(); } }, 'Aanpassen'),
+            el('button', { class: 'klein-knop', onclick: () => { const c = kopieMetHulp(b); if (c.naam) c.naam += ' (kopie)'; if (c.titel) c.titel += ' (kopie)'; S.inhoudBewerk = { soort, b: c, index: -1 }; teken(); } }, 'Kopiëren'),
+            el('button', { class: 'klein-knop', title: 'Maak een eigen versie om aan te passen en verberg het origineel', onclick: () => { const c = kopieMetHulp(b); S.inhoudBewerk = { soort, b: c, index: -1, verbergOrigineel: b.id }; teken(); } }, 'Aanpassen'),
             (v => el('button', { class: 'klein-knop' + (v ? ' uit' : ''), title: v ? 'De leerlingen zien dit niet. Klik om weer te tonen.' : 'Klik om dit te verbergen voor de leerlingen.', onclick: async () => { const set = new Set(EIGEN.verborgen || []); if (v) set.delete(b.id); else set.add(b.id); EIGEN.verborgen = [...set]; await bewaarInhoud(msg); teken(); } }, v ? '🙈 verborgen' : '👁 zichtbaar'))((EIGEN.verborgen || []).includes(b.id))))))),
       el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: () => { S.inhoudBewerk = { soort, b: { id: nieuwId('e'), ...(soort.endsWith('teksten') ? { titel: '', niveau: 2, tekst: '', vragen: [] } : soort === 'toneel' ? { titel: '', tekst: '' } : soort === 'solo' ? { titel: '', taal: 'nl', tekst: '' } : soort === 'uitdagingen' ? { naam: '', vragen: [] } : { naam: '' }) }, index: -1 }; teken(); } }, '+ Nieuw'))));
   }
@@ -360,10 +361,15 @@ function inhoudEditor({ soort, b, index, verbergOrigineel }) {
     const niv = el('select', {}, [1, 2, 3, 4, 5].map(n => el('option', { value: n, selected: Number(b.niveau) === n }, `${NIVEAUS[n]} (moeilijkheid ${n})`)));
     const tekst = el('textarea', { class: 'tekst', placeholder: 'Plak hier de tekst. Een nieuwe regel = een nieuwe alinea.' }, b.tekst || '');
     const vragen = el('textarea', { class: 'tekst', placeholder: 'Wie is Léa? | *Een meisje | Een hond | Een juf' }, vragenNaarTekst(b.vragen));
+    const fr = soort.startsWith('fr');
+    const wl = el('textarea', { class: 'tekst', rows: 8, placeholder: fr ? "le chien ; de hond ; chien\nhabiter ; wonen ; habite\nil y a ; er is, er zijn" : "dog ; hond\nlive ; wonen ; lives\ntake the bus ; de bus nemen" }, b.woordenlijst || '');
+    const vt = el('textarea', { class: 'tekst', rows: 6, placeholder: 'Nederlandse vertaling: één zin per regel, in dezelfde volgorde als de tekst.' }, b.vertaling || '');
     form.append(el('label', {}, 'Moeilijkheid (tip voor de leerlingen)', niv), el('label', {}, 'Tekst', tekst),
       el('label', {}, 'Vragen (één per regel: vraag | *juist antwoord | fout | fout)', vragen),
-      el('p', { class: 'stil' }, 'De gatentekst en het dictee worden automatisch uit de tekst gemaakt. Zonder vragen werken brons en goud ook als gatentekst.'));
-    lees = () => ({ ...b, titel: naam.value.trim(), niveau: Number(niv.value), tekst: tekst.value.trim(), vragen: vragenVanTekst(vragen.value) });
+      el('p', { class: 'stil' }, 'De gatentekst en het dictee worden automatisch uit de tekst gemaakt. Zonder vragen werken brons en goud ook als gatentekst.'),
+      el('label', {}, `Woorden bij de tekst (niet verplicht). Eén per regel: ${fr ? 'Frans' : 'Engels'} ; Nederlands ; vorm zoals in de tekst (niet verplicht). Deze woorden worden klikbaar in de tekst en vormen een woordenlijst bij Woordenschat.`, wl),
+      el('label', {}, 'Vertaling (niet verplicht). Eén zin per regel: dan verschijnt de vertaling onder elke zin. Anders als één blok onder de tekst.', vt));
+    lees = () => ({ ...b, titel: naam.value.trim(), niveau: Number(niv.value), tekst: tekst.value.trim(), vragen: vragenVanTekst(vragen.value), woordenlijst: wl.value.trim(), vertaling: vt.value.trim() });
   } else {
     const [uitleg, vb] = FORMAAT[soort];
     const t = el('textarea', { class: 'tekst', placeholder: vb }, naarTekst(soort, b));
