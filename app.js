@@ -84,7 +84,7 @@ function sessieTel(spel, item) {
 function moetReflecteren(s) {
   const inst = reflInst();
   if (!inst.aan || !s || !s.opgaven) return false;
-  if (s.opgaven < (Number(inst.min) || 1) && s.sec < 600) return false;
+  if (s.opgaven < (Number(inst.min) || 1) && s.sec < 300) return false;
   if (Date.now() - (s.laatst || 0) > 18 * 3600e3) return false;
   const eerder = S.srefs.filter(r => r.spel === s.spel);
   if (inst.hoeVaak === 'dag') return !eerder.some(r => dagStart(r.datum).getTime() === dagStart(new Date()).getTime());

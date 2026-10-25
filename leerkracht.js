@@ -813,6 +813,6 @@ function reflInstBlok(msg) {
     el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: r.aan, onchange: e => zet('aan', e.target.checked) }), ' Reflectie vragen bij het verlaten van een spel'),
     el('div', { class: 'rij-acties' }, 'Hoe vaak?', el('select', { class: 'veld', onchange: e => zet('hoeVaak', e.target.value) },
       [['dag', 'hoogstens 1 keer per spel per dag'], ['week', 'hoogstens 1 keer per spel per week'], ['altijd', 'telkens na een oefenmoment']].map(([v, t]) => el('option', { value: v, selected: r.hoeVaak === v }, t)))),
-    el('div', { class: 'rij-acties' }, 'Vanaf', el('select', { class: 'veld', onchange: e => zet('min', Number(e.target.value)) }, [1, 2, 3, 4, 5, 8, 10].map(n => el('option', { value: n, selected: Number(r.min) === n }, String(n)))), 'opgaven in hetzelfde spel (of na 10 minuten oefenen).'),
+    el('div', { class: 'rij-acties' }, 'Vanaf', el('select', { class: 'veld', onchange: e => zet('min', Number(e.target.value)) }, [1, 2, 3, 4, 5, 8, 10].map(n => el('option', { value: n, selected: Number(r.min) === n }, String(n)))), 'opgaven in hetzelfde spel (elk niveau is één opgave), of na 5 minuten oefenen.'),
     el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: r.overslaan, onchange: e => zet('overslaan', e.target.checked) }), ' De leerling mag "Nu niet" kiezen (je ziet dan wel dat de reflectie overgeslagen werd).'));
 }

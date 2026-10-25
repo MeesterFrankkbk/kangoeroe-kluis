@@ -51,7 +51,7 @@ Leerlingen vullen dit in via het tabblad **🛂 Mijn paspoort**. Jij ziet het pa
 Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. De afdruk is gemaakt voor zwart-wit: dikke lijnen, behaalde medailles met een dikke rand. Kies in het afdrukvenster: A4, marges Standaard, schaal 100 %, koptekst en voettekst uit. Het medailleblad schaalt zichzelf naar één A4, ook als er onderdelen bijkomen. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
 
 ## Korte reflectie na een spel
-Verlaat een leerling een spel waarin hij echt geoefend heeft (standaard minstens 3 opgaven), dan blikt hij kort terug. Dat gebeurt bij **← Kluizen**, **Mijn resultaten** of **Afmelden**, en niet na elk niveau. Sloot hij de computer gewoon af? Dan volgt de reflectie bij de volgende aanmelding.
+Verlaat een leerling een spel waarin hij echt geoefend heeft (standaard minstens 2 opgaven, want elk niveau is één opgave, of 5 minuten), dan blikt hij kort terug. Dat gebeurt bij **← Kluizen**, **Mijn resultaten** of **Afmelden**, en niet na elk niveau. Sloot hij de computer gewoon af? Dan volgt de reflectie bij de volgende aanmelding.
 1. **Hoe ging het?** 😴 te makkelijk · 🙂 goed · 🧗 moeilijk
 2. **Wat vond ik moeilijk?**, of bij te makkelijk: *Wat maakte het te makkelijk?*
 3. **Wat deed ik toen?** Klikbare aanpakken (stap voor stap, een schets, een patroon zoeken, een hint …) en eigen woorden. Bij te makkelijk: *Hoe daag ik mezelf volgende keer uit?*

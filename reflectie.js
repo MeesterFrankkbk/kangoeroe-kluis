@@ -15,7 +15,7 @@ const AANPAK = [
 const VOLGENDE = [
   ['hoger', '⬆️ Een hoger niveau'], ['meester', '👑 De meesterproef'], ['record', '⏱ Mijn record breken'], ['zonderhint', '🚫 Geen hints gebruiken'], ['ander', '🧩 Een ander onderdeel'],
 ];
-const REFL_STANDAARD = { aan: true, hoeVaak: 'dag', min: 3, overslaan: true };
+const REFL_STANDAARD = { aan: true, hoeVaak: 'dag', min: 2, overslaan: true };
 const reflInst = () => ({ ...REFL_STANDAARD, ...((typeof EIGEN !== 'undefined' && EIGEN?.instellingen?.reflectie) || {}) });
 const aanpakNaam = k => (AANPAK.find(a => a[0] === k) || [k, k])[1];
 const volgendeNaam = k => (VOLGENDE.find(a => a[0] === k) || [k, k])[1];
