@@ -5,6 +5,26 @@ const json = (d, status = 200) => new Response(JSON.stringify(d), { status, head
 const resKey = id => 'res/' + id;
 const toetsKey = (t, l) => `toets/${t}/${l}`;
 const MAX_PER_LEERLING = 8000;
+const srefKey = id => 'sref/' + id;
+const MAX_SREF = 1500;
+const tk = (v, n) => String(v ?? '').trim().slice(0, n);
+/* korte reflectie na een spel: alleen de velden die we kennen, met een maximale lengte */
+function schoonSref(r) {
+  if (!r || typeof r !== 'object') return null;
+  const spel = tk(r.spel, 40); if (!/^[a-z0-9-]+$/.test(spel)) return null;
+  const getal = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
+  const s = r.sessie && typeof r.sessie === 'object' ? r.sessie : {};
+  const codes = (a, n) => (Array.isArray(a) ? a : []).map(x => tk(x, 20)).filter(x => /^[a-z]+$/.test(x)).slice(0, n);
+  return {
+    id: tk(r.id, 40) || 's' + Date.now().toString(36), spel, thema: tk(r.thema, 60), themaNaam: tk(r.themaNaam, 80),
+    datum: isNaN(Date.parse(r.datum)) ? new Date().toISOString() : new Date(r.datum).toISOString(),
+    sessie: { opgaven: getal(s.opgaven, 999), gelukt: getal(s.gelukt, 999), hints: getal(s.hints, 999), minuten: getal(s.minuten, 999), nieuw: getal(s.nieuw, 5),
+      niveaus: (Array.isArray(s.niveaus) ? s.niveaus : []).map(n => getal(n, 5)).filter(Boolean).slice(0, 5), ...(s.meester ? { meester: true } : {}) },
+    ...(r.overgeslagen ? { overgeslagen: true } : {
+      gevoel: getal(r.gevoel, 3), moeilijk: tk(r.moeilijk, 600), aanpak: codes(r.aanpak, 10), aanpakTekst: tk(r.aanpakTekst, 400),
+      volgende: codes(r.volgende, 5), geleerd: tk(r.geleerd, 600), meenemen: tk(r.meenemen, 600) }),
+  };
+}
 const GRATIE_MS = 2 * 60 * 1000;
 
 const zonderAccent = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/œ/g, 'oe').replace(/æ/g, 'ae');
@@ -77,7 +97,40 @@ export default async (req) => {
       return json({ inhoud: (await store.get('inhoud', { type: 'json' })) || {} });
     case 'login': {
       const l = await leerling(); if (!l) return nietLl();
-      return json({ ok: true, resultaten: (await store.get(resKey(l.id), { type: 'json' })) || [] });
+      return json({ ok: true, resultaten: (await store.get(resKey(l.id), { type: 'json' })) || [], srefs: (await store.get(srefKey(l.id), { type: 'json' })) || [] });
+    }
+    /* ---------- korte reflecties na een spel ---------- */
+    case 'srefs': {
+      const l = await leerling(); if (!l) return nietLl();
+      return json({ srefs: (await store.get(srefKey(l.id), { type: 'json' })) || [] });
+    }
+    case 'sref': {
+      const l = await leerling(); if (!l) return nietLl();
+      const nieuw = (Array.isArray(body.items) ? body.items : []).map(schoonSref).filter(Boolean);
+      let lijstR = (await store.get(srefKey(l.id), { type: 'json' })) || [];
+      const ids = new Set(lijstR.map(r => r.id));
+      for (const r of nieuw) if (!ids.has(r.id)) lijstR.push(r);
+      /* te veel? eerst de oudste overgeslagen, daarna de oudste */
+      while (lijstR.length > MAX_SREF) { const k = lijstR.findIndex(r => r.overgeslagen); lijstR.splice(k >= 0 ? k : 0, 1); }
+      await store.setJSON(srefKey(l.id), lijstR);
+      return json({ ok: true, aantal: nieuw.length });
+    }
+    case 'lk-srefs': {
+      if (!isLeerkracht) return nietLk();
+      const { blobs } = await store.list({ prefix: 'sref/' });
+      const srefs = {};
+      await Promise.all(blobs.map(async b => { srefs[b.key.slice(5)] = (await store.get(b.key, { type: 'json' })) || []; }));
+      return json({ srefs });
+    }
+    case 'lk-sref': {
+      if (!isLeerkracht) return nietLk();
+      const key = srefKey(String(body.id || ''));
+      const lijstR = (await store.get(key, { type: 'json' })) || [];
+      const r = lijstR.find(x => x.id === body.srefId); if (!r) return json({ fout: 'Reflectie niet gevonden.' }, 404);
+      if (typeof body.reactie === 'string') { if (body.reactie.trim()) r.reactie = { tekst: body.reactie.trim().slice(0, 1500), datum: new Date().toISOString() }; else delete r.reactie; }
+      if (typeof body.besproken === 'boolean') { if (body.besproken) r.besproken = new Date().toISOString(); else delete r.besproken; }
+      await store.setJSON(key, lijstR);
+      return json({ ok: true, sref: r });
     }
     case 'resultaat': {
       const l = await leerling(); if (!l) return nietLl();

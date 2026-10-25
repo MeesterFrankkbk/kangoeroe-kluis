@@ -719,3 +719,30 @@ table.poly { border-collapse: collapse; margin-bottom: .8rem; } table.poly th, t
 .mem-kaart.open.vr { color: var(--teal); }
 .mem-kaart.weg { background: var(--goed-l); color: var(--goed); border-color: var(--goed); font-size: 1rem; cursor: default; }
 .mem-info { font-weight: 800; color: var(--teal); }
+
+/* ---------- korte reflectie na een spel ---------- */
+.sr { max-width: 760px; margin: 0 auto; }
+.sr-kop { display: flex; gap: 1rem; align-items: center; margin-bottom: .8rem; } .sr-kop h1 { margin: 0; } .sr-kop p { margin: .1rem 0 0; }
+.sr-groot { font-size: 3.2rem; line-height: 1; }
+.sr-vorige { background: #FFF1E3; border: 1.5px solid #F3C9A3; border-radius: 12px; padding: .6rem .9rem; margin: .4rem 0 1rem; }
+.sr-vraag { background: var(--kaart); border: 1.5px solid var(--lijn); border-radius: var(--rond); padding: .8rem 1rem; margin-bottom: .7rem; }
+.sr-vraag > b { display: flex; align-items: center; gap: .5rem; font-family: 'Fredoka', 'Nunito', sans-serif; font-size: 1.15rem; margin-bottom: .45rem; }
+.sr-vraag textarea { width: 100%; margin-top: .3rem; }
+.sr-nr { display: inline-grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--teal); color: #fff; font-size: .95rem; flex: none; }
+.sr-gevoel { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+.sr-gevoel button { border: 2px solid var(--lijn); background: #fff; border-radius: 14px; padding: .6rem .3rem; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: .15rem; }
+.sr-gevoel button:hover { border-color: var(--oranje); } .sr-gevoel button.aan { border-color: var(--teal); background: var(--teal-l); box-shadow: inset 0 0 0 1px var(--teal); }
+.sr-ico { font-size: 2rem; line-height: 1.1; }
+.sr-chips { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .3rem; }
+.sr-chip { border: 1.5px solid var(--lijn); background: #fff; border-radius: 99px; padding: .25rem .75rem; font-size: .93rem; }
+.sr-chip:hover { border-color: var(--oranje); } .sr-chip.aan { background: var(--teal); border-color: var(--teal); color: #fff; }
+.sr-voet { text-align: center; margin-top: .8rem; } .sr .knoppenrij { justify-content: center; }
+.sr-bedankt { font-size: 4rem; }
+@media (max-width: 520px) { .sr-gevoel button { font-size: .85rem; } .sr-ico { font-size: 1.6rem; } }
+/* leerkracht */
+.lk-sref.besproken { border-color: var(--goed); background: #F6FBF8; } .lk-sref.overgeslagen { opacity: .65; }
+.lk-sref-acties textarea { width: 100%; background: #fff; }
+.klik-naam { cursor: pointer; color: var(--teal); text-decoration: underline; }
+.rf-filters .rij-acties { align-items: center; margin: .3rem 0; }
+td.signaal { background: #FFE2C7 !important; font-weight: 800; }
+tr.gekozen td { background: var(--teal-l); }

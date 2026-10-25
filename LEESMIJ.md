@@ -50,6 +50,30 @@ Het paspoort volgt een leerling 3 schooljaren lang:
 Leerlingen vullen dit in via het tabblad **🛂 Mijn paspoort**. Jij ziet het paspoort onderaan bij elke leerling in het overzicht en schrijft daar feedback bij de reflecties.
 Afdrukken doe je via **Leerlingen & codes → Kangoeroe-paspoorten afdrukken**. De afdruk is gemaakt voor zwart-wit: dikke lijnen, behaalde medailles met een dikke rand. Kies in het afdrukvenster: A4, marges Standaard, schaal 100 %, koptekst en voettekst uit. Het medailleblad schaalt zichzelf naar één A4, ook als er onderdelen bijkomen. Vink *alleen de jaarbladen* aan om bij de start van een nieuw schooljaar enkel de jaarbladen bij te drukken.
 
+## Korte reflectie na een spel
+Verlaat een leerling een spel waarin hij echt geoefend heeft (standaard minstens 3 opgaven), dan blikt hij kort terug. Dat gebeurt bij **← Kluizen**, **Mijn resultaten** of **Afmelden**, en niet na elk niveau. Sloot hij de computer gewoon af? Dan volgt de reflectie bij de volgende aanmelding.
+1. **Hoe ging het?** 😴 te makkelijk · 🙂 goed · 🧗 moeilijk
+2. **Wat vond ik moeilijk?**, of bij te makkelijk: *Wat maakte het te makkelijk?*
+3. **Wat deed ik toen?** Klikbare aanpakken (stap voor stap, een schets, een patroon zoeken, een hint …) en eigen woorden. Bij te makkelijk: *Hoe daag ik mezelf volgende keer uit?*
+4. **Wat heb ik (bij)geleerd?**
+5. **Wat neem ik mee naar de volgende stap?** Dit voornemen ziet de leerling terug wanneer hij dat spel opnieuw opent.
+
+Een keuze bij vraag 1 en minstens één korte zin zijn verplicht. De leerling ziet zijn reflecties en jouw reacties in zijn paspoort bij 💭 Reflectie.
+
+**Leerkracht → 💭 Reflecties**
+- Kies een periode, een klas of een leerling.
+- De tabel per leerling toont hoe vaak het te makkelijk, goed of moeilijk was. Oranje bij 😴 betekent dat de leerling het vaak te makkelijk vindt: stel een hoger niveau of de meesterproef voor.
+- Bij elke reflectie schrijf je een korte reactie en vink je *besproken in een gesprek* aan. Met *alleen nog niet besproken* bereid je een coachgesprek voor.
+- **🖨 Terugblik** drukt per leerling één blad af voor de gekozen periode. Daarop staan de reflecties, een korte samenvatting (gevoel, aanpakken, oefentijd, nieuwe medailles), naar keuze de paspoortreflecties en jouw reacties, en ruimte voor een opmerking en de handtekening van de ouders.
+
+Instellen doe je bij **Eigen inhoud → 💭 Korte reflectie na een spel**:
+- aan of uit
+- hoe vaak: hoogstens 1 keer per spel per dag (standaard), per week, of telkens
+- vanaf hoeveel opgaven
+- of de leerling "Nu niet" mag kiezen
+
+De reflecties worden apart bewaard. "Oefenresultaten wissen" wist ze niet.
+
 ## Wiskunde-uitdagingen
 Bij **Rekenen → Wiskunde-uitdagingen** maken de leerlingen meerkeuzevragen (A–E). Elke vraag is een prent, met per vraag hulp in stapjes.
 - Brons, zilver en goud: telkens een derde van de reeks.

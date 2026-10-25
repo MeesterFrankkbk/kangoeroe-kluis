@@ -14,7 +14,7 @@ const sessie = {
   set(v) { try { v ? sessionStorage.setItem('kk_sessie', JSON.stringify(v)) : sessionStorage.removeItem('kk_sessie'); } catch { } },
 };
 
-const S = { online: false, leerlingen: [], wie: null, resultaten: [], vak: opslag.get('kk_vak', 'taal'), toetsen: [] };
+const S = { online: false, leerlingen: [], wie: null, resultaten: [], srefs: [], vak: opslag.get('kk_vak', 'taal'), toetsen: [] };
 const inVolgorde = () => !!(EIGEN.instellingen && EIGEN.instellingen.niveausInVolgorde);
 const volleNaam = l => `${l.voornaam} ${l.naam}`;
 
@@ -65,6 +65,121 @@ async function verstuurWachtrij() {
   } finally { bezig = false; }
 }
 
+/* ---------- korte reflectie na een spel ----------
+   Een oefenmoment = alles wat de leerling na elkaar in hetzelfde spel doet. Bij het verlaten (terug naar de kluizen,
+   'Mijn resultaten' of afmelden) volgt één korte reflectie, als er genoeg geoefend is en niet te vaak. */
+let SES = null;
+const sesSleutel = () => 'kk_ses_' + S.wie.id;
+const srefSleutel = id => 'kk_sref_' + id;
+function sessieTel(spel, item) {
+  if (!SES || SES.spel !== spel.id) SES = { spel: spel.id, thema: item.thema, themaNaam: item.themaNaam, opgaven: 0, gelukt: 0, hints: 0, sec: 0, niveaus: [], start: Date.now(),
+    voor: Math.max(0, ...S.resultaten.filter(r => r.spel === spel.id && r.juist && r !== item).map(r => r.niveau)) };
+  SES.opgaven++; if (item.juist) SES.gelukt++; SES.hints += item.hints; SES.sec += item.seconden;
+  if (!SES.niveaus.includes(item.niveau)) SES.niveaus.push(item.niveau);
+  if (item.meester) SES.meester = true;
+  if (item.themaNaam) { SES.thema = item.thema; SES.themaNaam = item.themaNaam; }
+  SES.laatst = Date.now();
+  opslag.set(sesSleutel(), SES);
+}
+function moetReflecteren(s) {
+  const inst = reflInst();
+  if (!inst.aan || !s || !s.opgaven) return false;
+  if (s.opgaven < (Number(inst.min) || 1) && s.sec < 600) return false;
+  if (Date.now() - (s.laatst || 0) > 18 * 3600e3) return false;
+  const eerder = S.srefs.filter(r => r.spel === s.spel);
+  if (inst.hoeVaak === 'dag') return !eerder.some(r => dagStart(r.datum).getTime() === dagStart(new Date()).getTime());
+  if (inst.hoeVaak === 'week') return !eerder.some(r => Date.now() - Date.parse(r.datum) < 7 * 864e5);
+  return true;
+}
+/* geeft true als de reflectie getoond wordt; doe() volgt daarna */
+function vraagReflectie(doe) {
+  if (!S.wie) return false;
+  const s = SES || opslag.get(sesSleutel(), null);
+  SES = null; opslag.weg(sesSleutel());
+  if (!moetReflecteren(s)) return false;
+  toonReflectie(s, doe); return true;
+}
+function bewaarSref(r) {
+  S.srefs.push(r); opslag.set(srefSleutel(S.wie.id), S.srefs);
+  if (!S.online) return;
+  const rij = opslag.get('kk_sref_wachtrij', []); rij.push({ id: S.wie.id, pin: S.wie.pin, item: r }); opslag.set('kk_sref_wachtrij', rij);
+  verstuurSrefs();
+}
+let srefBezig = false;
+async function verstuurSrefs() {
+  if (!S.online || srefBezig) return; srefBezig = true;
+  try {
+    const groepen = {};
+    for (const x of opslag.get('kk_sref_wachtrij', [])) (groepen[x.id] = groepen[x.id] || { id: x.id, pin: x.pin, items: [] }).items.push(x.item);
+    for (const g of Object.values(groepen)) {
+      try { await api('sref', g); opslag.set('kk_sref_wachtrij', opslag.get('kk_sref_wachtrij', []).filter(x => x.id !== g.id || !g.items.some(i => i.id === x.item.id))); }
+      catch (e) { if (e.status === 401) opslag.set('kk_sref_wachtrij', opslag.get('kk_sref_wachtrij', []).filter(x => x.id !== g.id)); }
+    }
+  } finally { srefBezig = false; }
+}
+/* haalt de reflecties (met de reacties van de leerkracht) van de server */
+async function laadSrefs() {
+  if (!S.online || !S.wie) return;
+  try {
+    const d = await api('srefs', sleutel()); const ids = new Set((d.srefs || []).map(r => r.id));
+    S.srefs = [...(d.srefs || []), ...S.srefs.filter(r => !ids.has(r.id))]; opslag.set(srefSleutel(S.wie.id), S.srefs);
+  } catch { }
+}
+const laatsteVoornemen = spelId => [...S.srefs].filter(r => r.spel === spelId && !r.overgeslagen && (r.meenemen || (r.volgende || []).length)).sort((a, b) => b.datum.localeCompare(a.datum))[0];
+
+function toonReflectie(s, doe) {
+  stopSpel(); kop();
+  const spel = SPELLEN.find(x => x.id === s.spel) || { naam: s.spel, icoon: '' };
+  const inst = reflInst();
+  const nu = Math.max(0, ...S.resultaten.filter(r => r.spel === s.spel && r.juist).map(r => r.niveau));
+  const sessie = { opgaven: s.opgaven, gelukt: s.gelukt, hints: s.hints, minuten: Math.round(s.sec / 60), niveaus: [...s.niveaus].sort(), nieuw: nu > (s.voor || 0) ? nu : 0, ...(s.meester ? { meester: true } : {}) };
+  const r = { id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), spel: s.spel, thema: s.thema || '', themaNaam: s.themaNaam || '', sessie, aanpak: [], volgende: [] };
+  const vorige = laatsteVoornemen(s.spel);
+  const hoogst = Math.max(nu, ...s.niveaus);
+  const melding = el('div');
+  const tv = (k, ph, rijen = 2) => { const t = el('textarea', { class: 'tekst', rows: rijen, placeholder: ph, 'data-veld': k }); t.value = r[k] || ''; t.addEventListener('input', () => r[k] = t.value); return t; };
+  const chips = (lijst, k) => el('div', { class: 'sr-chips' }, lijst.map(([c, t]) => el('button', { type: 'button', class: 'sr-chip' + (r[k].includes(c) ? ' aan' : ''), onclick: e => { const i = r[k].indexOf(c); if (i >= 0) r[k].splice(i, 1); else r[k].push(c); e.currentTarget.classList.toggle('aan', i < 0); } }, t)));
+  const vraag = (nr, titel, ...inh) => el('div', { class: 'sr-vraag' }, el('b', {}, el('span', { class: 'sr-nr' }, nr), titel), ...inh);
+  const deel2 = el('div');
+  const tekenDeel2 = () => {
+    const makkelijk = r.gevoel === 1;
+    if (makkelijk) r.aanpak = []; else r.volgende = [];
+    deel2.replaceChildren(...[
+      ...(makkelijk
+        ? [vraag('2', 'Wat maakte het te makkelijk?', tv('moeilijk', 'bv. Ik zag de oplossing meteen. Ik ken dit al van …')),
+          vraag('3', 'Hoe daag ik mezelf volgende keer uit?', chips(VOLGENDE, 'volgende'), hoogst < 5 ? el('p', { class: 'stil' }, `Tip: probeer volgende keer ${NIVEAUS[hoogst + 1]}.`) : spel.geenMeester ? null : el('p', { class: 'stil' }, 'Tip: heb je de meesterproef al geprobeerd?'))]
+        : [vraag('2', 'Wat vond ik moeilijk?', tv('moeilijk', r.gevoel === 2 ? 'Ook als het goed ging: wanneer moest je even nadenken?' : 'bv. De laatste stap. Ik zag niet hoe ik moest beginnen.')),
+          vraag('3', 'Wat deed ik toen?', el('small', { class: 'stil' }, 'Klik aan wat klopt (meer mag) en/of schrijf het zelf.'), chips(AANPAK, 'aanpak'), tv('aanpakTekst', 'Of in je eigen woorden…', 1))]),
+      vraag('4', 'Wat heb ik (bij)geleerd?', tv('geleerd', 'bv. Dat je beter eerst … / Een nieuw woord: …')),
+      vraag('5', 'Wat neem ik mee naar de volgende stap?', tv('meenemen', 'bv. Volgende keer ga ik eerst … / Ik wil nog oefenen op …'))]);
+  };
+  const gevoelKnoppen = el('div', { class: 'sr-gevoel' }, SPELGEVOEL.map((g, i) => el('button', { type: 'button', onclick: () => {
+    const eerst = !r.gevoel; r.gevoel = i + 1; gevoelKnoppen.querySelectorAll('button').forEach((b, j) => b.classList.toggle('aan', j === i));
+    tekenDeel2(); melding.replaceChildren();
+    if (eerst) deel2.querySelector('textarea')?.focus({ preventScroll: true });
+  } }, el('span', { class: 'sr-ico' }, g.ico), g.t)));
+  const klaar = () => { kop(); doe(); };
+  const bewaar = () => {
+    if (!r.gevoel) { melding.replaceChildren(el('div', { class: 'melding fout' }, 'Kies eerst hoe het ging: te makkelijk, goed of moeilijk.')); return; }
+    const teksten = ['moeilijk', 'aanpakTekst', 'geleerd', 'meenemen'].map(k => (r[k] || '').trim());
+    if (!teksten.some(t => t.split(/\s+/).filter(Boolean).length >= 3)) { melding.replaceChildren(el('div', { class: 'melding fout' }, 'Schrijf bij minstens één vraag een korte zin (3 woorden of meer).')); return; }
+    for (const k of ['moeilijk', 'aanpakTekst', 'geleerd', 'meenemen']) r[k] = (r[k] || '').trim();
+    r.datum = new Date().toISOString(); bewaarSref(r);
+    toon(el('div', { class: 'welkom' }, el('div', { class: 'sr-bedankt' }, '💭'), el('h1', {}, 'Goed teruggeblikt!'),
+      el('p', {}, ...(r.meenemen ? ['Je neemt mee: ', el('b', {}, `"${r.meenemen}"`), '. Dat zie je terug wanneer je dit spel opnieuw opent.'] : ['Je reflectie is bewaard in je paspoort.'])),
+      el('button', { class: 'knop', onclick: klaar }, 'Verder')));
+  };
+  const overslaan = () => { bewaarSref({ id: r.id, spel: r.spel, thema: r.thema, themaNaam: r.themaNaam, sessie, overgeslagen: true, datum: new Date().toISOString() }); klaar(); };
+  toon(el('div', { class: 'sr' },
+    el('div', { class: 'sr-kop' }, el('span', { class: 'sr-groot' }, '💭'), el('div', {}, el('h1', {}, 'Even terugblikken'),
+      el('p', {}, el('b', {}, `${spel.icoon} ${spel.naam}`), s.themaNaam ? ` · ${s.themaNaam}` : '', el('br'), el('span', { class: 'stil' }, 'Je deed ' + sessieZin(sessie) + '.')))),
+    vorige ? el('div', { class: 'sr-vorige' }, el('b', {}, '🎯 Vorige keer nam je je voor: '), [vorige.meenemen, ...(vorige.volgende || []).map(volgendeNaam)].filter(Boolean).join(' · '), el('br'), el('small', {}, 'Is dat gelukt? Je mag het hieronder vertellen.')) : null,
+    vraag('1', 'Hoe ging het?', gevoelKnoppen), deel2, melding,
+    el('div', { class: 'knoppenrij' }, el('button', { class: 'knop', onclick: bewaar }, '💾 Bewaar en ga verder'), inst.overslaan ? el('button', { class: 'knop tweede', onclick: overslaan }, 'Nu niet') : null),
+    el('p', { class: 'stil sr-voet' }, 'Je leerkracht leest je reflecties en gebruikt ze in een gesprek met jou. Je vindt ze terug in je paspoort bij 💭 Reflectie.')));
+  scrollTo(0, 0);
+}
+
 /* ---------- kop ---------- */
 function kop() {
   const r = document.getElementById('kop-rechts');
@@ -75,7 +190,7 @@ function kop() {
     el('button', { onclick: () => verlaatSpel(toonMijn) }, 'Mijn resultaten'),
     el('button', { onclick: () => verlaatSpel(afmelden) }, 'Afmelden'));
 }
-function afmelden() { sessie.set(null); S.wie = null; S.resultaten = []; kop(); toonLogin(); }
+function afmelden() { if (vraagReflectie(afmelden)) return; sessie.set(null); S.wie = null; S.resultaten = []; kop(); toonLogin(); }
 
 /* ---------- start ---------- */
 async function start() {
@@ -89,7 +204,7 @@ async function start() {
     document.getElementById('modus').textContent = 'Oefenmodus: resultaten blijven op deze computer';
   }
   const s = sessie.get();
-  if (s && (!S.online || S.leerlingen.some(l => l.id === s.id))) { S.wie = s; S.resultaten = opslag.get(sleutelRes(s.id), []); kop(); toonHome(); verstuurWachtrij(); laadToetsen(); }
+  if (s && (!S.online || S.leerlingen.some(l => l.id === s.id))) { S.wie = s; S.resultaten = opslag.get(sleutelRes(s.id), []); S.srefs = opslag.get(srefSleutel(s.id), []); kop(); toonHome(); verstuurWachtrij(); verstuurSrefs(); laadToetsen(); laadSrefs(); }
   else toonLogin();
 }
 
@@ -104,7 +219,7 @@ function toonLogin(fout) {
     w.append(el('div', { class: 'formulier' }, vn, nm, kl), el('button', { class: 'knop', onclick: () => {
       if (!vn.value.trim() || !nm.value.trim()) return vn.focus();
       const l = { id: 'lokaal-' + U.norm(vn.value + nm.value + kl.value), voornaam: vn.value.trim(), naam: nm.value.trim(), klas: kl.value.trim(), pin: '' };
-      aanmelden(l, opslag.get(sleutelRes(l.id), []));
+      S.srefs = opslag.get(srefSleutel(l.id), []); aanmelden(l, opslag.get(sleutelRes(l.id), []));
     } }, 'Start'));
     toon(w); return;
   }
@@ -131,6 +246,8 @@ function toonPin(l) {
     try {
       const d = await api('login', { id: l.id, pin });
       const lokaal = opslag.get(sleutelRes(l.id), []), ids = new Set((d.resultaten || []).map(r => r.id));
+      const lokaalR = opslag.get(srefSleutel(l.id), []), idsR = new Set((d.srefs || []).map(r => r.id));
+      S.srefs = [...(d.srefs || []), ...lokaalR.filter(r => !idsR.has(r.id))];
       aanmelden({ ...l, pin }, [...(d.resultaten || []), ...lokaal.filter(r => !ids.has(r.id))]);
     } catch (e) { pin = ''; teken(); melding.replaceChildren(el('div', { class: 'melding fout' }, e.status === 401 ? 'Die code klopt niet. Probeer opnieuw.' : 'Geen verbinding. Probeer opnieuw.')); }
   };
@@ -148,8 +265,8 @@ document.addEventListener('keydown', e => {
 });
 function aanmelden(wie, resultaten) {
   S.wie = wie; S.resultaten = resultaten; sessie.set(wie);
-  opslag.set(sleutelRes(wie.id), resultaten);
-  kop(); toonHome(); verstuurWachtrij(); laadToetsen();
+  opslag.set(sleutelRes(wie.id), resultaten); opslag.set(srefSleutel(wie.id), S.srefs);
+  kop(); toonHome(); verstuurWachtrij(); verstuurSrefs(); laadToetsen();
 }
 
 /* ---------- home ---------- */
@@ -162,7 +279,7 @@ async function laadToetsen() {
   if (S.vak === 'toetsen' && document.querySelector('.home-kop')) toonHome();
 }
 function toonHome() {
-  stopSpel(); kop();
+  stopSpel(); if (vraagReflectie(toonHome)) return; kop();
   const open = S.toetsen.filter(x => x.status !== 'ingeleverd').length;
   const tabs = el('div', { class: 'vaktabs' },
     Object.entries(VAKKEN).map(([k, v]) => el('button', { 'data-vak': k, class: S.vak === k ? 'aan' : '', onclick: () => { S.vak = k; opslag.set('kk_vak', k); toonHome(); } }, `${v.icoon} ${v.naam}`)),
@@ -238,8 +355,10 @@ function toonStart(spel) {
     el('select', { onchange: e => { bron = lijst.find(b => b.id === e.target.value); opslag.set('kk_bron_' + spel.id, bron.id); teken(); } },
       lijst.map(b => { const bt = spel.perThema ? besteNiveau(spel, b.id) : 0; return el('option', { value: b.id, selected: b === bron }, (b.eigen ? '★ ' : '') + (b.naam || b.titel) + (b.niveau ? ` (${NIVEAUS[b.niveau]})` : '') + (bt ? ` ✓ ${NIVEAUS[bt]}` : '')); }))) : null;
   teken();
+  const vn = laatsteVoornemen(spel.id);
   toon(
     el('div', { class: 'spelkop' }, el('button', { class: 'knop tweede', onclick: toonHome }, '← Kluizen'), el('h1', {}, `${spel.icoon} ${spel.naam}`)),
+    vn ? el('div', { class: 'sr-vorige' }, el('b', {}, '🎯 Vorige keer nam je je voor: '), [vn.meenemen, ...(vn.volgende || []).map(volgendeNaam)].filter(Boolean).join(' · ')) : null,
     el('div', { class: 'uitleg' }, spel.uitleg),
     keuze, el('p', { class: 'stil', style: 'text-align:center' }, (inVolgorde() ? '' : 'Kies zelf je niveau: begin waar je denkt dat je uitdaging ligt. ') + (spel.perThema ? 'Je medailles tellen per lijst of tekst.' : '')), inhoud);
 }
@@ -273,6 +392,7 @@ function toonSpel(spel, niveau, bron, mp = null) {
     if (mp && juist && !hints && mp.ronde === 3) item.meester = true;
     item.punten = punten(item);
     bewaarResultaat(item);
+    sessieTel(spel, item);
     return item;
   };
   const gelukt = () => {
@@ -338,7 +458,7 @@ function toonSucces(spel, niveau, bron, item, mp) {
 
 /* ---------- mijn resultaten ---------- */
 function toonMijn() {
-  stopSpel(); kop();
+  stopSpel(); if (vraagReflectie(toonMijn)) return; kop();
   const naam = id => SPELLEN.find(s => s.id === id)?.naam || id;
   const rijen = [...S.resultaten].reverse().slice(0, 100);
   toon(
@@ -515,6 +635,15 @@ async function toonPaspoort() {
       el('div', { class: 'pp-r-kop' }, el('b', {}, `${PERIODES[x.periode]} · ${x.schooljaar}`), el('span', {}, x.motivatie ? GEVOEL[x.motivatie - 1] : ''), el('button', { class: 'knop klein tweede', onclick: () => { S.ppBewerk = JSON.parse(JSON.stringify(x)); toonPaspoort(); scrollTo(0, 0); } }, 'Aanpassen')),
       REFLECTIEVRAGEN.filter(([k]) => x[k]).map(([k, l]) => el('p', {}, el('b', {}, l + ' '), x[k])),
       x.feedback ? el('div', { class: 'pp-feedback' }, el('b', {}, '💬 Feedback van je leerkracht: '), x.feedback.tekst) : null))));
+    /* korte reflecties na een spel */
+    const kort = S.srefs.filter(x => !x.overgeslagen).sort((a, b) => b.datum.localeCompare(a.datum));
+    inhoud.append(el('h2', { style: 'margin-top:1.5rem' }, '💭 Mijn korte reflecties na een spel'),
+      el('p', { class: 'stil' }, 'Telkens je een spel verlaat waarin je flink geoefend hebt, blik je kort terug. Lees ze eens na voor je hierboven je reflectie van de periode schrijft.'),
+      kort.length ? el('div', { class: 'pp-reflecties' }, kort.slice(0, S.ppKortAlles ? 1000 : 12).map(srefKaart)) : el('p', {}, 'Nog geen korte reflecties.'),
+      kort.length > 12 && !S.ppKortAlles ? el('button', { class: 'knop tweede klein', onclick: () => { S.ppKortAlles = true; toonPaspoort(); } }, `Toon alle ${kort.length}`) : null);
+    const reacties = () => JSON.stringify(S.srefs.map(x => x.reactie?.tekst || ''));
+    const voor = reacties();
+    laadSrefs().then(() => { if (S.ppTab === 'reflectie' && S.vak === 'paspoort' && reacties() !== voor) toonPaspoort(); });
   }
   if (S.ppTab === 'groei') {
     inhoud.append(el('p', { class: 'opdracht' }, 'Zo groei je in de Kangoeroe-Kluis, over 3 schooljaren. Elke kluis telt 5 medailles per onderdeel.'),
@@ -524,6 +653,20 @@ async function toonPaspoort() {
   }
 }
 
-window.addEventListener('online', verstuurWachtrij);
-setInterval(verstuurWachtrij, 60000);
+function srefKaart(x) {
+  const g = SPELGEVOEL[(x.gevoel || 2) - 1];
+  return el('div', { class: 'pp-reflectie', 'data-sref': x.id },
+    el('div', { class: 'pp-r-kop' }, el('b', {}, `${spelIcoVan(x.spel)} ${spelNaamVan(x.spel)}`), x.themaNaam ? el('span', { class: 'stil' }, x.themaNaam) : null,
+      el('span', {}, `${g.ico} ${g.t}`), el('span', { class: 'stil' }, new Date(x.datum).toLocaleDateString('nl-BE', { weekday: 'short', day: 'numeric', month: 'short' }))),
+    x.sessie?.opgaven ? el('p', { class: 'stil' }, sessieZin(x.sessie)) : null,
+    x.moeilijk ? el('p', {}, el('b', {}, (x.gevoel === 1 ? 'Waarom te makkelijk? ' : 'Wat vond ik moeilijk? ')), x.moeilijk) : null,
+    (x.aanpak || []).length || x.aanpakTekst ? el('p', {}, el('b', {}, 'Wat deed ik toen? '), [...(x.aanpak || []).map(aanpakNaam), x.aanpakTekst].filter(Boolean).join(' · ')) : null,
+    (x.volgende || []).length ? el('p', {}, el('b', {}, 'Volgende keer kies ik: '), x.volgende.map(volgendeNaam).join(' · ')) : null,
+    x.geleerd ? el('p', {}, el('b', {}, 'Wat heb ik geleerd? '), x.geleerd) : null,
+    x.meenemen ? el('p', {}, el('b', {}, 'Wat neem ik mee? '), x.meenemen) : null,
+    x.reactie?.tekst ? el('div', { class: 'pp-feedback' }, el('b', {}, '💬 Je leerkracht: '), x.reactie.tekst) : null);
+}
+
+window.addEventListener('online', () => { verstuurWachtrij(); verstuurSrefs(); });
+setInterval(() => { verstuurWachtrij(); verstuurSrefs(); }, 60000);
 start();

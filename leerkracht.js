@@ -29,8 +29,8 @@ function toonLogin(fout) {
 }
 async function laad() {
   try {
-    const [d, t, pp] = await Promise.all([api('overzicht'), api('lk-toetsen'), api('lk-paspoorten').catch(() => ({ paspoorten: {} }))]);
-    S.data = d; S.toetsData = t; S.paspoorten = pp.paspoorten || {}; EIGEN = d.inhoud || {};
+    const [d, t, pp, sr] = await Promise.all([api('overzicht'), api('lk-toetsen'), api('lk-paspoorten').catch(() => ({ paspoorten: {} })), api('lk-srefs').catch(() => ({ srefs: {} }))]);
+    S.data = d; S.toetsData = t; S.paspoorten = pp.paspoorten || {}; S.srefs = sr.srefs || {}; EIGEN = d.inhoud || {};
     sessionStorage.setItem('kk_lk', S.ww);
     document.getElementById('kop-rechts').replaceChildren(
       el('button', { onclick: laad }, '↻ Vernieuwen'),
@@ -41,14 +41,14 @@ async function laad() {
 const klassen = () => [...new Set(S.data.leerlingen.map(l => l.klas || ''))].sort((a, b) => a.localeCompare(b, 'nl', { numeric: true }));
 
 function teken() {
-  const tabs = { overzicht: '📊 Overzicht', spellen: '🧩 Per spel', logboek: '🕘 Logboek', toetsen: '📝 Toetsen', inhoud: '✏️ Eigen inhoud', leerlingen: '👥 Leerlingen & codes' };
+  const tabs = { overzicht: '📊 Overzicht', spellen: '🧩 Per spel', logboek: '🕘 Logboek', reflecties: '💭 Reflecties', toetsen: '📝 Toetsen', inhoud: '✏️ Eigen inhoud', leerlingen: '👥 Leerlingen & codes' };
   const kop = [];
   if (S.data.standaardWachtwoord) kop.push(melding('fout', 'Let op: je gebruikt nog het standaardwachtwoord "kangoeroe". Stel in Netlify de omgevingsvariabele LEERKRACHT_WACHTWOORD in (zie LEESMIJ).'));
-  const klasFilter = ['overzicht', 'spellen', 'logboek'].includes(S.tab) && !S.detail ? el('label', { class: 'rechts' }, 'Klas', el('select', { onchange: e => { S.klas = e.target.value; teken(); } }, el('option', { value: '' }, 'Alle klassen'), klassen().map(k => el('option', { value: k, selected: S.klas === k }, k || '(geen)')))) : null;
+  const klasFilter = ['overzicht', 'spellen', 'logboek', 'reflecties'].includes(S.tab) && !S.detail ? el('label', { class: 'rechts' }, 'Klas', el('select', { onchange: e => { S.klas = e.target.value; teken(); } }, el('option', { value: '' }, 'Alle klassen'), klassen().map(k => el('option', { value: k, selected: S.klas === k }, k || '(geen)')))) : null;
   kop.push(el('div', { class: 'tabs' }, Object.entries(tabs).map(([k, v]) => el('button', { class: S.tab === k ? 'aan' : '', onclick: () => { S.tab = k; S.detail = null; S.toetsBewerk = null; S.toetsRes = null; S.inhoudBewerk = null; teken(); } }, v)), klasFilter));
   let inhoud;
   if (S.detail) inhoud = detail(S.detail);
-  else inhoud = { overzicht, spellen: perSpel, logboek: () => logboek(), toetsen: toetsenTab, inhoud: inhoudTab, leerlingen: beheer }[S.tab]();
+  else inhoud = { overzicht, spellen: perSpel, logboek: () => logboek(), reflecties: reflectieTab, toetsen: toetsenTab, inhoud: inhoudTab, leerlingen: beheer }[S.tab]();
   toon(...kop, inhoud);
 }
 
@@ -104,6 +104,7 @@ function detail(id) {
   const tr = (S.toetsData.toetsen || []).map(t => ({ t, r: S.toetsData.resultaten[t.id]?.[id] })).filter(x => x.r);
   if (tr.length) wrap.append(el('h2', {}, 'Toetsen'), el('div', { class: 'tabelwrap' }, el('table', { class: 'lijst' }, el('tr', {}, ['Toets', 'Status', 'Score', '%'].map(h => el('th', {}, h))),
     tr.map(({ t, r }) => el('tr', {}, el('td', {}, t.titel), el('td', {}, r.ingeleverd ? `ingeleverd ${fmtDatum(r.ingeleverd)}` : 'bezig'), el('td', {}, `${r.score}/${r.max}`), el('td', {}, r.max ? Math.round(100 * r.score / r.max) + '%' : '–'))))));
+  wrap.append(srefBlok(l));
   wrap.append(paspoortBlok(l));
   wrap.append(el('h2', {}, 'Logboek'), logboek(id));
   wrap.append(el('div', { class: 'rij-acties geen-print' }, el('button', { class: 'knop tweede', onclick: async () => {
@@ -278,6 +279,7 @@ function inhoudTab() {
         ' Niveaus in volgorde vrijspelen (eerst brons, dan zilver …). Uit = leerlingen kiezen zelf op welk niveau ze beginnen.'),
       el('div', { style: 'margin-top:1rem' }, el('b', {}, '🛂 Andere uitdagingen in het Kangoeroe-paspoort'), el('p', { class: 'stil' }, 'Eén uitdaging per regel. De leerlingen duiden hiervoor zelf hun status, niveau en gevoel aan.'),
         (() => { const t = el('textarea', { class: 'tekst', rows: 6 }); t.value = paspoortUitdagingen().join('\n'); return [t, el('div', { class: 'rij-acties' }, el('button', { class: 'knop tweede klein', onclick: async () => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), uitdagingen: t.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean) }; await bewaarInhoud(msg); } }, '💾 Bewaar lijst'))]; })())),
+    reflInstBlok(msg),
     raadselBlok(),
     ingebouwdBlok(),
     el('p', {}, 'Maak hier je eigen lijsten en teksten. Ze verschijnen bij de leerlingen bovenaan de keuzelijst, met een ★. Tip: kopieer een ingebouwde lijst als vertrekpunt.'), msg);
@@ -705,4 +707,112 @@ function ingebouwdBlok() {
   teken2();
   return el('div', { class: 'blok', id: 'ingebouwd' }, el('h3', {}, '📦 Ingebouwde inhoud: rebussen, droedels en letterdroedels'),
     el('p', { class: 'stil' }, 'Bekijk alles wat in de app zit, zet items uit die je niet wilt gebruiken (bv. omdat je ze in de klas al gebruikt) en voeg je eigen materiaal toe.'), tabs, msg, inhoud);
+}
+
+
+/* ================= Korte reflecties na een spel ================= */
+const alleSrefs = () => S.srefs || {};
+function lkSrefKaart(l, r, opties = {}) {
+  const g = r.gevoel ? SPELGEVOEL[r.gevoel - 1] : null;
+  const kaart = el('div', { class: 'pp-reflectie lk-sref' + (r.besproken ? ' besproken' : '') + (r.overgeslagen ? ' overgeslagen' : '') });
+  const kop = el('div', { class: 'pp-r-kop' },
+    opties.metNaam ? el('b', { class: 'klik-naam', onclick: () => { S.detail = l.id; teken(); scrollTo(0, 0); } }, `${l.voornaam} ${l.naam}`) : null,
+    el('b', {}, `${spelIcoVan(r.spel)} ${spelNaamVan(r.spel)}`), r.themaNaam ? el('span', { class: 'stil' }, r.themaNaam) : null,
+    el('span', {}, r.overgeslagen ? '⏭ overgeslagen' : g ? `${g.ico} ${g.t}` : ''), el('span', { class: 'stil' }, fmtDatum(r.datum)));
+  kaart.append(kop, r.sessie?.opgaven ? el('p', { class: 'stil' }, sessieZin(r.sessie)) : null);
+  if (r.overgeslagen) return kaart;
+  kaart.append(
+    r.moeilijk ? el('p', {}, el('b', {}, r.gevoel === 1 ? 'Waarom te makkelijk? ' : 'Wat vond ik moeilijk? '), r.moeilijk) : null,
+    (r.aanpak || []).length || r.aanpakTekst ? el('p', {}, el('b', {}, 'Wat deed ik toen? '), [...(r.aanpak || []).map(aanpakNaam), r.aanpakTekst].filter(Boolean).join(' · ')) : null,
+    (r.volgende || []).length ? el('p', {}, el('b', {}, 'Volgende keer kies ik: '), r.volgende.map(volgendeNaam).join(' · ')) : null,
+    r.geleerd ? el('p', {}, el('b', {}, 'Wat heb ik (bij)geleerd? '), r.geleerd) : null,
+    r.meenemen ? el('p', {}, el('b', {}, 'Wat neem ik mee? '), r.meenemen) : null);
+  const t = el('textarea', { class: 'tekst', rows: 1, placeholder: 'Korte reactie voor de leerling (optioneel)…' }); t.value = r.reactie?.tekst || '';
+  const vink = el('input', { type: 'checkbox', checked: !!r.besproken });
+  const m = el('span', { class: 'stil' });
+  const bewaar = async (wat) => {
+    try { const d = await api('lk-sref', { id: l.id, srefId: r.id, ...wat }); Object.assign(r, { reactie: d.sref.reactie, besproken: d.sref.besproken }); if (!d.sref.reactie) delete r.reactie; if (!d.sref.besproken) delete r.besproken;
+      kaart.classList.toggle('besproken', !!r.besproken); m.textContent = 'Bewaard ✓'; }
+    catch (e) { m.textContent = e.message; }
+  };
+  vink.addEventListener('change', () => bewaar({ besproken: vink.checked }));
+  kaart.append(el('div', { class: 'pp-feedback lk-sref-acties' }, t, el('div', { class: 'knoppenrij' },
+    el('button', { class: 'knop klein', onclick: () => bewaar({ reactie: t.value }) }, '💬 Bewaar reactie'),
+    el('label', { class: 'vink' }, vink, ' besproken in een gesprek'), m)));
+  return kaart;
+}
+function srefBlok(l) {
+  const lijst = [...(alleSrefs()[l.id] || [])].sort((a, b) => b.datum.localeCompare(a.datum));
+  const echt = lijst.filter(r => !r.overgeslagen);
+  const wrap = el('div', { class: 'blok' }, el('div', { class: 'spelkop' }, el('h2', { style: 'margin:0;flex:1' }, '💭 Korte reflecties na een spel'),
+    el('button', { class: 'knop tweede klein', onclick: () => { S.tab = 'reflecties'; S.detail = null; S.rf = { ...rfStand(), leerling: l.id }; teken(); scrollTo(0, 0); } }, '🔎 Alle reflecties · 🖨 afdrukken per periode')));
+  if (!lijst.length) { wrap.append(el('p', { class: 'stil' }, 'Nog geen korte reflecties.')); return wrap; }
+  wrap.append(el('p', { class: 'stil' }, `${echt.length} reflecties · ${SPELGEVOEL.map((g, i) => `${g.ico} ${echt.filter(r => r.gevoel === i + 1).length}`).join('  ')} · ${lijst.length - echt.length} overgeslagen · ${echt.filter(r => !r.besproken).length} nog niet besproken`),
+    el('div', { class: 'pp-reflecties' }, lijst.slice(0, 6).map(r => lkSrefKaart(l, r))));
+  return wrap;
+}
+const rfStand = () => { const tot = new Date(), van = new Date(); van.setDate(van.getDate() - 13); return { van: isoDag(van), tot: isoDag(tot), leerling: '', open: false, gevoel: 0, overgeslagen: false }; };
+function reflectieTab() {
+  S.rf = S.rf || rfStand();
+  const f = S.rf;
+  const namen = Object.fromEntries(S.data.leerlingen.map(l => [l.id, l]));
+  const ll = S.data.leerlingen.filter(l => !S.klas || (l.klas || '') === S.klas).sort((a, b) => (a.klas || '').localeCompare(b.klas || '', 'nl', { numeric: true }) || a.naam.localeCompare(b.naam, 'nl') || a.voornaam.localeCompare(b.voornaam, 'nl'));
+  if (f.leerling && !ll.some(l => l.id === f.leerling)) f.leerling = '';
+  const a = +dagStart(f.van), b = +dagEind(f.tot);
+  const inP = r => { const t = Date.parse(r.datum); return t >= a && t <= b; };
+  const vanL = l => (alleSrefs()[l.id] || []).filter(inP);
+  const wrap = el('div');
+  /* filters */
+  const datum = k => el('input', { type: 'date', class: 'veld', value: f[k], onchange: e => { if (e.target.value) { f[k] = e.target.value; teken(); } } });
+  const snel = el('select', { class: 'veld', onchange: e => { const k = periodeKeuzes()[Number(e.target.value)]; if (k) { f.van = isoDag(k[1]); f.tot = isoDag(k[2]); teken(); } } },
+    el('option', { value: '' }, 'Snel kiezen…'), periodeKeuzes().map(([n], i) => el('option', { value: i }, n)));
+  wrap.append(el('div', { class: 'blok rf-filters' },
+    el('div', { class: 'rij-acties' }, el('b', {}, 'Periode'), datum('van'), '–', datum('tot'), snel),
+    el('div', { class: 'rij-acties' },
+      el('select', { class: 'veld', onchange: e => { f.leerling = e.target.value; teken(); } }, el('option', { value: '' }, `Alle leerlingen${S.klas ? ' van ' + S.klas : ''}`), ll.map(l => el('option', { value: l.id, selected: f.leerling === l.id }, `${l.naam} ${l.voornaam}${l.klas ? ' (' + l.klas + ')' : ''}`))),
+      el('select', { class: 'veld', onchange: e => { f.gevoel = Number(e.target.value); teken(); } }, el('option', { value: 0 }, 'Elk gevoel'), SPELGEVOEL.map((g, i) => el('option', { value: i + 1, selected: f.gevoel === i + 1 }, `${g.ico} ${g.t}`))),
+      el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: f.open, onchange: e => { f.open = e.target.checked; teken(); } }), ' alleen nog niet besproken'),
+      el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: f.overgeslagen, onchange: e => { f.overgeslagen = e.target.checked; teken(); } }), ' ook overgeslagen tonen'))));
+  /* samenvatting per leerling */
+  const rijen = ll.map(l => { const r = vanL(l), e = r.filter(x => !x.overgeslagen); return { l, r, e, g: [1, 2, 3].map(n => e.filter(x => x.gevoel === n).length), over: r.length - e.length, open: e.filter(x => !x.besproken).length }; });
+  wrap.append(el('h2', {}, 'Per leerling'), el('p', { class: 'stil' }, 'Klik op een leerling om alleen zijn of haar reflecties te zien. 😴 in het oranje = vindt het vaak te makkelijk: een hoger niveau of de meesterproef voorstellen.'),
+    el('div', { class: 'tabelwrap' }, el('table', { class: 'lijst' },
+      el('tr', {}, ['Leerling', 'Klas', 'Reflecties', ...SPELGEVOEL.map(g => g.ico + ' ' + g.t.toLowerCase()), 'Overgeslagen', 'Nog bespreken', 'Laatste'].map(h => el('th', {}, h))),
+      rijen.map(x => el('tr', { class: 'klik' + (f.leerling === x.l.id ? ' gekozen' : ''), onclick: () => { f.leerling = f.leerling === x.l.id ? '' : x.l.id; teken(); } },
+        el('td', {}, el('b', {}, x.l.naam), ' ', x.l.voornaam), el('td', {}, x.l.klas || ''), el('td', {}, String(x.e.length)),
+        x.g.map((n, i) => el('td', { class: i === 0 && n >= 3 && n >= x.e.length / 2 ? 'signaal' : '' }, String(n))),
+        el('td', {}, String(x.over)), el('td', {}, x.open ? el('b', {}, String(x.open)) : '0'), el('td', {}, x.r.length ? fmtDatum(x.r.reduce((m, y) => y.datum > m ? y.datum : m, '')) : '–'))))));
+  /* afdrukken */
+  const metMed = el('input', { type: 'checkbox', checked: true }), metPp = el('input', { type: 'checkbox', checked: true }), metRe = el('input', { type: 'checkbox', checked: true }), alleenMet = el('input', { type: 'checkbox', checked: true });
+  const wie = () => (f.leerling ? ll.filter(l => l.id === f.leerling) : ll);
+  wrap.append(el('div', { class: 'blok', style: 'margin-top:1.2rem' }, el('h3', {}, '🖨 Periodiek overzicht afdrukken (voor het coachgesprek of voor de ouders)'),
+    el('p', { class: 'stil' }, `Eén blad per leerling met de reflecties van ${lokaalDatum(f.van).toLocaleDateString('nl-BE')} tot ${lokaalDatum(f.tot).toLocaleDateString('nl-BE')}, een korte samenvatting en ruimte voor een opmerking en de handtekening van de ouders. Overgeslagen reflecties komen er niet op.`),
+    el('div', { class: 'rij-acties' },
+      el('label', { class: 'vink' }, metMed, ' met oefentijd en nieuwe medailles'), el('label', { class: 'vink' }, metPp, ' met de reflecties uit het paspoort'),
+      el('label', { class: 'vink' }, metRe, ' met mijn reacties'), f.leerling ? null : el('label', { class: 'vink' }, alleenMet, ' alleen leerlingen met reflecties')),
+    el('div', { class: 'rij-acties' }, el('button', { class: 'knop', onclick: () => {
+      let lijst = wie().map(l => ({ leerling: l, srefs: alleSrefs()[l.id] || [], resultaten: S.data.resultaten[l.id] || [], paspoort: S.paspoorten?.[l.id] }));
+      if (!f.leerling && alleenMet.checked) lijst = lijst.filter(x => x.srefs.some(r => inP(r) && !r.overgeslagen));
+      if (!lijst.length) { alert('Geen leerlingen met reflecties in deze periode.'); return; }
+      drukTerugblik(lijst, { van: f.van, tot: f.tot, metMedailles: metMed.checked, metPeriodiek: metPp.checked, metReactie: metRe.checked });
+    } }, f.leerling ? `🖨 Terugblik van ${namen[f.leerling]?.voornaam || ''}` : `🖨 Terugblik van ${S.klas ? 'klas ' + S.klas : 'alle leerlingen'}`))));
+  /* de reflecties zelf */
+  const kaarten = wie().flatMap(l => vanL(l).map(r => ({ l, r })))
+    .filter(({ r }) => (f.overgeslagen || !r.overgeslagen) && (!f.open || (!r.besproken && !r.overgeslagen)) && (!f.gevoel || r.gevoel === f.gevoel))
+    .sort((x, y) => y.r.datum.localeCompare(x.r.datum));
+  wrap.append(el('h2', {}, `Reflecties (${kaarten.length})`),
+    kaarten.length ? el('div', { class: 'pp-reflecties' }, kaarten.slice(0, 300).map(({ l, r }) => lkSrefKaart(l, r, { metNaam: !f.leerling }))) : el('p', {}, 'Geen reflecties in deze periode.'),
+    kaarten.length > 300 ? el('p', { class: 'stil' }, 'De eerste 300 worden getoond. Kies een kortere periode of een leerling.') : null);
+  return wrap;
+}
+function reflInstBlok(msg) {
+  const r = reflInst();
+  const zet = async (k, v) => { EIGEN.instellingen = { ...(EIGEN.instellingen || {}), reflectie: { ...reflInst(), [k]: v } }; await bewaarInhoud(msg); };
+  return el('div', { class: 'blok' }, el('h3', {}, '💭 Korte reflectie na een spel'),
+    el('p', { class: 'stil' }, 'Wanneer een leerling een spel verlaat (terug naar de kluizen, naar zijn resultaten of afmelden), blikt hij kort terug: hoe ging het, wat was moeilijk en wat deed ik toen, wat heb ik geleerd, wat neem ik mee. Niet na elk niveau, alleen na een echt oefenmoment. Je leest alles bij 💭 Reflecties.'),
+    el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: r.aan, onchange: e => zet('aan', e.target.checked) }), ' Reflectie vragen bij het verlaten van een spel'),
+    el('div', { class: 'rij-acties' }, 'Hoe vaak?', el('select', { class: 'veld', onchange: e => zet('hoeVaak', e.target.value) },
+      [['dag', 'hoogstens 1 keer per spel per dag'], ['week', 'hoogstens 1 keer per spel per week'], ['altijd', 'telkens na een oefenmoment']].map(([v, t]) => el('option', { value: v, selected: r.hoeVaak === v }, t)))),
+    el('div', { class: 'rij-acties' }, 'Vanaf', el('select', { class: 'veld', onchange: e => zet('min', Number(e.target.value)) }, [1, 2, 3, 4, 5, 8, 10].map(n => el('option', { value: n, selected: Number(r.min) === n }, String(n)))), 'opgaven in hetzelfde spel (of na 10 minuten oefenen).'),
+    el('label', { class: 'vink' }, el('input', { type: 'checkbox', checked: r.overslaan, onchange: e => zet('overslaan', e.target.checked) }), ' De leerling mag "Nu niet" kiezen (je ziet dan wel dat de reflectie overgeslagen werd).'));
 }
